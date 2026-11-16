@@ -446,7 +446,7 @@
         .note-backdrop {
             position: fixed;
             inset: 0 0 calc(var(--bar-h) + var(--safe-b)) 0;
-            z-index: 30;
+            z-index: 55;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
@@ -463,7 +463,7 @@
             bottom: calc(var(--bar-h) + var(--safe-b));
             height: 86vh;
             max-height: 820px;
-            z-index: 40;
+            z-index: 60;
             background: linear-gradient(180deg, #0c0c0f 0%, #050506 100%);
             border-top: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 26px 26px 0 0;
@@ -1993,6 +1993,14 @@
         // ---------------------------------------------------------------
         function openNoteSheet() {
             installBar.classList.remove('visible');
+
+            // Kütüphane açıksa kapat: mektup açılırken arkada kütüphane kalmasın
+            if (document.body.classList.contains('view-library')) {
+                document.body.classList.remove('view-library');
+                document.body.classList.add('view-home');
+                tabHome.classList.add('active');
+                tabLibrary.classList.remove('active');
+            }
             noteSheet.style.transform = '';
             noteSheet.classList.add('open');
             noteBackdrop.classList.add('open');
