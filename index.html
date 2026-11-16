@@ -882,6 +882,90 @@
             white-space: nowrap;
         }
 
+        /* Çevrimdışı indirme kartı */
+        .offline-card {
+            margin: 0 0 14px 0;
+            padding: 13px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+        }
+
+        .offline-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .offline-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .offline-title svg { width: 16px; height: 16px; fill: currentColor; opacity: 0.9; }
+
+        .offline-desc {
+            margin-top: 3px;
+            font-size: 0.76rem;
+            line-height: 1.45;
+            color: #9a9aa2;
+        }
+
+        .offline-btn {
+            flex-shrink: 0;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 15px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #ffffff;
+            color: #09090b;
+            cursor: pointer;
+        }
+
+        .offline-btn[disabled] {
+            background: rgba(255, 255, 255, 0.12);
+            color: #b9b9c0;
+            cursor: default;
+        }
+
+        .offline-btn:active { transform: scale(0.97); }
+
+        .offline-bar {
+            position: relative;
+            margin-top: 11px;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            overflow: hidden;
+        }
+
+        .offline-bar span {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0%;
+            border-radius: 999px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .offline-state {
+            margin-top: 7px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #8a8a93;
+        }
+
+        .offline-state.ok { color: #4ade80; }
+
         .lib-list {
             flex: 1;
             overflow-y: auto;
@@ -1135,7 +1219,22 @@
             <h2>Kütüphane</h2>
             <span id="libCount" class="lib-count"></span>
         </header>
-        <div id="libraryList" class="lib-list"></div>
+        <div id="libraryList" class="lib-list">
+            <div class="offline-card">
+                <div class="offline-top">
+                    <div>
+                        <div class="offline-title">
+                            <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                            Çevrimdışı dinleme
+                        </div>
+                        <div class="offline-desc" id="offlineDesc">Şarkıları telefona indir, internet olmadan da çalsın.</div>
+                    </div>
+                    <button id="offlineBtn" class="offline-btn" type="button">İndir</button>
+                </div>
+                <div class="offline-bar"><span id="offlineBarFill"></span></div>
+                <div class="offline-state" id="offlineState">Hazırlanıyor…</div>
+            </div>
+        </div>
     </section>
 
     <!-- Kütüphane görünümünde mini oynatıcı -->
@@ -1853,6 +1952,75 @@
         }
 
 
+
+        // ---------------------------------------------------------------
+        // ÇEVRİMDIŞI İNDİRME
+        // ---------------------------------------------------------------
+        const offlineBtn = document.getElementById('offlineBtn');
+        const offlineState = document.getElementById('offlineState');
+        const offlineBarFill = document.getElementById('offlineBarFill');
+        const offlineDesc = document.getElementById('offlineDesc');
+        let swRegistration = null;
+        let downloading = false;
+
+        function askCacheStatus() {
+            if (!swRegistration || !swRegistration.active) return;
+            swRegistration.active.postMessage({ type: 'cache-status' });
+        }
+
+        function paintStatus(done, total) {
+            const all = done >= total && total > 0;
+            offlineBarFill.style.width = total ? `${Math.round((done / total) * 100)}%` : '0%';
+            offlineState.textContent = all
+                ? `Tüm şarkılar indirildi (${done}/${total}) — internet olmadan çalar`
+                : `${done}/${total} şarkı indirildi`;
+            offlineState.classList.toggle('ok', all);
+            offlineBtn.textContent = all ? 'İndirildi' : (downloading ? 'İndiriliyor…' : 'İndir');
+            offlineBtn.disabled = all || downloading;
+        }
+
+        navigator.serviceWorker?.addEventListener('message', (event) => {
+            const data = event.data || {};
+            if (data.type === 'cache-status') {
+                paintStatus(data.done, data.total);
+            } else if (data.type === 'download-progress') {
+                paintStatus(data.done, data.total);
+                offlineState.textContent = `İndiriliyor… ${data.done}/${data.total}`;
+            } else if (data.type === 'download-done') {
+                downloading = false;
+                paintStatus(data.done, data.total);
+                if (data.done < data.total) {
+                    offlineState.textContent = `${data.done}/${data.total} indirildi — bağlantı kesildi, tekrar dene`;
+                    offlineState.classList.remove('ok');
+                }
+            }
+        });
+
+        offlineBtn.addEventListener('click', () => {
+            if (!swRegistration || !swRegistration.active) {
+                offlineState.textContent = 'Bu tarayıcı çevrimdışı indirmeyi desteklemiyor.';
+                return;
+            }
+            downloading = true;
+            offlineBtn.disabled = true;
+            offlineBtn.textContent = 'İndiriliyor…';
+            offlineState.classList.remove('ok');
+            offlineState.textContent = 'İndirme başladı…';
+            swRegistration.active.postMessage({ type: 'download-all' });
+        });
+
+        // Uygulama kuruluysa ve internet varsa, tüm şarkıları arka planda indir
+        function autoDownloadIfInstalled() {
+            const installed = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            const conn = navigator.connection || {};
+            const cheap = !conn.saveData && /wifi|ethernet|4g|^$/.test((conn.type || conn.effectiveType || '') || '');
+            if (installed && cheap && swRegistration && swRegistration.active) {
+                setTimeout(() => {
+                    if (!downloading) swRegistration.active.postMessage({ type: 'download-all' });
+                }, 4000);
+            }
+        }
+
         // ---------------------------------------------------------------
         // EKRANLAR: ANA SAYFA / KÜTÜPHANE + GERİ BUTONU
         // ---------------------------------------------------------------
@@ -1875,6 +2043,7 @@
             if (isLibrary) {
                 installBar.classList.remove('visible');
                 renderLibrary();
+                askCacheStatus();
             }
         }
 
@@ -1891,7 +2060,8 @@
 
         // Kütüphane listesi: satıra dokununca o şarkı çalar
         function renderLibrary() {
-            libraryList.innerHTML = '';
+            // Sadece şarkı satırlarını yenile; çevrimdışı kartı korunur
+            libraryList.querySelectorAll('.lib-row').forEach((el) => el.remove());
             libCount.textContent = `${PLAYLIST.length} şarkı`;
 
             PLAYLIST.forEach((track, index) => {
@@ -2128,7 +2298,18 @@
         // Service worker: ikinci açılışta şarkılar anında hazır
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    swRegistration = reg;
+                    const ready = (r) => {
+                        askCacheStatus();
+                        autoDownloadIfInstalled();
+                    };
+                    if (reg.active) ready(reg);
+                    else navigator.serviceWorker.ready.then(ready);
+                }).catch(() => {
+                    offlineBtn.disabled = true;
+                    offlineState.textContent = 'Çevrimdışı indirme kullanılamıyor.';
+                });
             });
         }
 

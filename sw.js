@@ -1,12 +1,14 @@
 /**
  * Sudem müzik kutusu — service worker
- * Amaç: şarkılar ikinci açılışta beklemeden çalsın.
- *  - Şarkılar ve kapaklar: "cache first" (bir kez indi → hep anında)
- *  - Sayfa/HTML: "network first" (güncellemeler hemen görünsün)
+ * Amaç: uygulama internetsiz de çalışsın (sayfa + tüm şarkılar + kapaklar).
+ *
+ * Not: önbellek adları SABİT tutulur; uygulama güncellenince indirilen
+ * şarkılar silinmez, yeniden indirmek gerekmez.
  */
-const VERSION = 'sudem-v3';
-const AUDIO_CACHE = `${VERSION}-audio`;
-const MEDIA_CACHE = `${VERSION}-media`;
+const APP_VERSION = 'v4';
+const AUDIO_CACHE = 'sudem-audio-v1';
+const MEDIA_CACHE = 'sudem-media-v1';
+const META_CACHE = 'sudem-meta-' + APP_VERSION;
 
 const CORE = [
   './',
@@ -14,50 +16,77 @@ const CORE = [
   './manifest.webmanifest',
   './og-image.png',
   './icon-256.png',
-  './asset/videom-hd.mp4',
   './asset/videom-poster.webp'
 ];
 
-const AUDIO_FILES = [
-  './asset/audio-opt/Rafat-Hasanli-Kisa-Mesafe-94.mp3',
-  './asset/audio-opt/Diyar-Pala-Anla.mp3',
-  './asset/audio-opt/Mor-Ve-Otesi-Bir-Derdim-Var.mp3',
-  './asset/audio-opt/dilerimki.mp3',
-  './asset/audio-opt/velet-seni-bana-yazmislar-35.mp3',
-  './asset/audio-opt/Eypio-Ay-Kizim.mp3',
-  './asset/audio-opt/Anil-Emre-Daldal-B-68.mp3',
-  './asset/audio-opt/Stap-Bitanem-27.mp3'
+// Sıra, index.html'deki PLAYLIST sırasıyla aynı olmalı (kapak eşleşmesi için)
+const TRACKS = [
+  { audio: './asset/audio-opt/Rafat-Hasanli-Kisa-Mesafe-94.mp3', cover: './asset/rafet.jpg' },
+  { audio: './asset/audio-opt/Diyar-Pala-Anla.mp3',              cover: './asset/diyar.jpg' },
+  { audio: './asset/audio-opt/Mor-Ve-Otesi-Bir-Derdim-Var.mp3',  cover: './asset/mor.jpg' },
+  { audio: './asset/audio-opt/dilerimki.mp3',                    cover: './asset/dkkt.jpg' },
+  { audio: './asset/audio-opt/velet-seni-bana-yazmislar-35.mp3', cover: './asset/velet.webp' },
+  { audio: './asset/audio-opt/Eypio-Ay-Kizim.mp3',               cover: './asset/eypio.jpg' },
+  { audio: './asset/audio-opt/Anil-Emre-Daldal-B-68.mp3',        cover: './asset/b.webp' },
+  { audio: './asset/audio-opt/Stap-Bitanem-27.mp3',              cover: './asset/stap.webp' }
 ];
 
-const COVERS = [
-  './asset/rafet.jpg',
-  './asset/diyar.jpg',
-  './asset/mor.jpg',
-  './asset/dkkt.jpg',
-  './asset/velet.webp',
-  './asset/eypio.jpg',
-  './asset/b.webp',
-  './asset/stap.webp'
-];
-
+// ---------------------------------------------------------------- install
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const core = await caches.open(MEDIA_CACHE);
-    await Promise.allSettled(CORE.map((url) => core.add(url)));
+    const meta = await caches.open(META_CACHE);
+    await Promise.allSettled(CORE.map((url) => meta.add(new Request(url, { cache: 'reload' }))));
     self.skipWaiting();
   })());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    const keep = [AUDIO_CACHE, MEDIA_CACHE, META_CACHE];
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => !k.startsWith(VERSION)).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => !keep.includes(k)).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-// Mobil veride tüm kütüphaneyi indirmek çalan şarkıyı boğar:
-// sadece Wi-Fi'de ve sıradaki birkaç şarkıyı, sırayla (paralel değil) indir.
+// ---------------------------------------------------------------- yardımcılar
+async function has(cacheName, url) {
+  const cache = await caches.open(cacheName);
+  return !!(await cache.match(new Request(url), { ignoreSearch: true }));
+}
+
+async function grab(cacheName, url) {
+  const cache = await caches.open(cacheName);
+  if (await has(cacheName, url)) return true;
+  try {
+    const res = await fetch(new Request(url, { cache: 'no-cache' }));
+    if (res && res.ok) {
+      await cache.put(new Request(url), res.clone());
+      return true;
+    }
+  } catch (_) { /* çevrimdışı ya da hata: sonra tekrar denenir */ }
+  return false;
+}
+
+async function cacheStatus() {
+  let done = 0;
+  for (const t of TRACKS) if (await has(AUDIO_CACHE, t.audio)) done++;
+  return { type: 'cache-status', done, total: TRACKS.length };
+}
+
+// Hepsini sırayla indir (paralel indirme bağlantıyı boğmasın)
+async function downloadAll(reply) {
+  let done = 0;
+  for (const t of TRACKS) {
+    const okAudio = await grab(AUDIO_CACHE, t.audio);
+    await grab(MEDIA_CACHE, t.cover);
+    if (okAudio) done++;
+    reply({ type: 'download-progress', done, total: TRACKS.length });
+  }
+  reply({ type: 'download-done', done, total: TRACKS.length });
+}
+
+// Sıradaki birkaç şarkıyı sessizce indir (sadece hızlı bağlantıda)
 function isCheapNetwork() {
   const c = navigator.connection || {};
   if (c.saveData) return false;
@@ -65,33 +94,34 @@ function isCheapNetwork() {
   return t === 'wifi' || t === 'ethernet' || t === '4g' || t === '';
 }
 
-async function warm(urls, cacheName, limit) {
-  const cache = await caches.open(cacheName);
-  for (const url of urls.slice(0, limit)) {
-    try {
-      if (await cache.match(new Request(url), { ignoreSearch: true })) continue;
-      await cache.add(new Request(url, { cache: 'no-cache' }));
-    } catch (_) { /* tek dosya inmezse devam */ }
+async function warmSome(startIndex, limit) {
+  const ordered = TRACKS.slice(startIndex).concat(TRACKS.slice(0, startIndex)).slice(0, limit);
+  for (const t of ordered) {
+    if (await has(AUDIO_CACHE, t.audio)) continue;
+    await grab(AUDIO_CACHE, t.audio);
   }
+  for (const t of TRACKS) await grab(MEDIA_CACHE, t.cover);
 }
 
-function warmLibrary(startIndex = 0) {
-  if (!isCheapNetwork()) return Promise.resolve();
-  const ordered = AUDIO_FILES.slice(startIndex).concat(AUDIO_FILES.slice(0, startIndex));
-  return Promise.allSettled([
-    warm(ordered, AUDIO_CACHE, 3),
-    warm(COVERS, MEDIA_CACHE, COVERS.length)
-  ]);
-}
-
+// ---------------------------------------------------------------- mesajlar
 self.addEventListener('message', (event) => {
   const data = event.data;
-  if (data === 'warm') { event.waitUntil(warmLibrary(0)); return; }
-  if (data && typeof data === 'object' && data.type === 'warm' && typeof data.index === 'number') {
-    event.waitUntil(warmLibrary(data.index));
-  }
+  const reply = (msg) => {
+    if (event.source && event.source.postMessage) event.source.postMessage(msg);
+  };
+
+  if (data === 'warm') { event.waitUntil(warmSome(0, 3)); return; }
+  if (data && data.type === 'warm') { event.waitUntil(warmSome(data.index || 0, 3)); return; }
+  if (data && data.type === 'cache-status') { event.waitUntil(cacheStatus().then(reply)); return; }
+  if (data && data.type === 'download-all') { event.waitUntil(downloadAll(reply)); return; }
 });
 
+// Uygulama açıldıktan sonra, hızlı bağlantıda sıradaki şarkıları sessizce hazırla
+self.addEventListener('activate', () => {
+  setTimeout(() => { if (isCheapNetwork()) warmSome(0, 3); }, 6000);
+});
+
+// ---------------------------------------------------------------- fetch
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -102,49 +132,56 @@ self.addEventListener('fetch', (event) => {
   const isAudio = /\.(mp3|m4a|aac|ogg)$/i.test(url.pathname);
   const isMedia = /\.(mp4|webp|jpg|jpeg|png|svg|woff2?)$/i.test(url.pathname);
 
-  // Ses: cache first (anında çalsın), yoksa ağdan indir ve sakla
+  // Ses: cache first — internetsizken de anında çalar
   if (isAudio) {
     event.respondWith((async () => {
       const cache = await caches.open(AUDIO_CACHE);
       const hit = await cache.match(req, { ignoreSearch: true });
       if (hit) return hit;
-      const res = await fetch(req);
-      if (res.ok && res.status === 200) cache.put(req, res.clone());
-      return res;
+      try {
+        const res = await fetch(req);
+        if (res.ok && res.status === 200) cache.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return new Response('', { status: 504, statusText: 'offline' });
+      }
     })());
     return;
   }
 
-  // Video / görseller: önce cache, yoksa ağ
+  // Video / görseller: cache first, yoksa ağ
   if (isMedia) {
     event.respondWith((async () => {
       const cache = await caches.open(MEDIA_CACHE);
       const hit = await cache.match(req, { ignoreSearch: true });
       if (hit) return hit;
-      const res = await fetch(req);
-      if (res.ok && res.status === 200) cache.put(req, res.clone());
-      return res;
+      try {
+        const res = await fetch(req);
+        if (res.ok && res.status === 200) cache.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return new Response('', { status: 504, statusText: 'offline' });
+      }
     })());
     return;
   }
 
-  // HTML ve diğerleri: network first, çevrimdışıysa cache
+  // Sayfa: cache first (uygulama anında açılsın), arka planda güncelle
   event.respondWith((async () => {
-    try {
-      const res = await fetch(req);
+    const meta = await caches.open(META_CACHE);
+    const cached = await meta.match(req, { ignoreSearch: true });
+
+    const network = fetch(req).then((res) => {
       if (res.ok && (req.mode === 'navigate' || req.destination === 'document')) {
-        const cache = await caches.open(MEDIA_CACHE);
-        cache.put(req, res.clone());
+        meta.put(req, res.clone());
       }
       return res;
-    } catch (_) {
-      const cached = await caches.match(req, { ignoreSearch: true });
-      return cached || Response.error();
-    }
-  })());
-});
+    }).catch(() => null);
 
-// Uygulama açıldıktan sonra (Wi-Fi'deyse) sıradaki birkaç şarkıyı sessizce indir
-self.addEventListener('activate', () => {
-  setTimeout(() => { warmLibrary(0); }, 6000);
+    if (cached) return cached;
+    const res = await network;
+    if (res) return res;
+    const fallback = await caches.match('./index.html', { ignoreSearch: true });
+    return fallback || new Response('Çevrimdışı', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+  })());
 });
