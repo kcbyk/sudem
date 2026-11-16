@@ -2,18 +2,37 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Kısa Mesafe — Rafat Hasanlı</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Sudenur için hazırlanmış küçük bir müzik kutusu.">
+
+    <!-- Telefona yüklenebilir (PWA) -->
+    <meta name="theme-color" content="#09090b">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon-256.png" sizes="256x256" type="image/png">
+    <link rel="apple-touch-icon" href="icon-256.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Sudem">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta property="og:title" content="Kısa Mesafe — Sudenur için">
+    <meta property="og:description" content="Sana bir notum var.">
+    <meta property="og:image" content="og-image.png">
+    <meta property="og:type" content="website">
+
+    <!-- İlk şarkının ilk saniyelerini önden çek: dokunur dokunmaz çalsın -->
+    <link rel="preload" as="image" href="asset/videom-poster.webp">
+
     <style>
         :root {
             --accent: #ff0033;
             --text-main: #ffffff;
-            --text-muted: rgba(255, 255, 255, 0.65);
-            --track-bg: rgba(255, 255, 255, 0.22);
-            --hover-bg: rgba(255, 255, 255, 0.08);
+            --text-muted: rgba(255, 255, 255, 0.74);
+            --track-bg: rgba(255, 255, 255, 0.28);
+            --hover-bg: rgba(255, 255, 255, 0.12);
+            --panel: rgba(9, 9, 11, 0.82);
+            --safe-b: env(safe-area-inset-bottom, 0px);
+            --safe-t: env(safe-area-inset-top, 0px);
         }
 
         *, *::before, *::after {
@@ -27,129 +46,175 @@
             height: 100%;
             overflow: hidden;
             background-color: #09090b;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             color: var(--text-main);
             user-select: none;
+            -webkit-user-select: none;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Tam Ekran Canvas Video */
+        /* Tam Ekran Arka Plan Video */
         .bg-video {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
+            inset: 0;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            object-position: center;
+            object-position: center 35%;
             z-index: 1;
-            transition: filter 0.35s ease;
+            background-color: #09090b;
+            background-position: center;
+            background-size: cover;
+            filter: saturate(1.12) contrast(1.07);
+            transform: scale(1.06);
+            animation: bgDrift 40s ease-in-out infinite alternate;
+            transition: filter 0.4s ease;
+        }
+
+        /* Sabit duran görüntü "donuk" görünüyordu; çok yavaş bir hareket
+           hem daha canlı hem de ekranda daha keskin algılanıyor. */
+        @keyframes bgDrift {
+            from { transform: scale(1.06) translate3d(0, 0, 0); }
+            to   { transform: scale(1.12) translate3d(-1.5%, -1.2%, 0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bg-video { animation: none; transform: scale(1.04); }
         }
 
         body.is-paused .bg-video {
-            filter: brightness(0.88);
+            filter: brightness(0.9) saturate(1.05) contrast(1.07);
         }
 
-        /* Alt Kısımda Okunabilirliği Sağlayan Yumuşak Degrade */
+        /* Yazıların okunabilirliği için degrade */
         .vignette {
             position: fixed;
             inset: 0;
             z-index: 2;
             pointer-events: none;
-            background: linear-gradient(
-                to top,
-                rgba(0, 0, 0, 0.94) 0%,
-                rgba(0, 0, 0, 0.70) 26%,
-                rgba(0, 0, 0, 0.18) 54%,
-                rgba(0, 0, 0, 0.0) 100%
-            );
+            background:
+                linear-gradient(to top,
+                    rgba(0, 0, 0, 0.96) 0%,
+                    rgba(0, 0, 0, 0.90) 18%,
+                    rgba(0, 0, 0, 0.62) 40%,
+                    rgba(0, 0, 0, 0.20) 62%,
+                    rgba(0, 0, 0, 0) 82%),
+                linear-gradient(to bottom,
+                    rgba(0, 0, 0, 0.55) 0%,
+                    rgba(0, 0, 0, 0) 22%);
         }
 
-        /* Alt Oynatıcı Alanı */
+        /* Alt Oynatıcı */
         .player {
             position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
             z-index: 10;
-            padding: 0 40px 18px 40px;
+            padding: 18px 22px calc(14px + var(--safe-b)) 22px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
+            background: linear-gradient(to top, rgba(6, 6, 8, 0.94) 0%, rgba(6, 6, 8, 0.78) 62%, rgba(6, 6, 8, 0) 100%);
+            backdrop-filter: blur(16px) saturate(1.15);
+            -webkit-backdrop-filter: blur(16px) saturate(1.15);
+            max-width: 100%;
         }
 
-        /* Oynatıcının Sol Üstünde Ufak Kare Kapak + Şarkı Bilgisi */
         .track-header {
             display: flex;
             align-items: center;
-            gap: 16px;
-            max-width: 560px;
+            gap: 14px;
+            max-width: 620px;
+            width: 100%;
         }
 
         .cover {
-            width: 64px;
-            height: 64px;
-            border-radius: 10px;
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
             object-fit: cover;
             flex-shrink: 0;
             background-color: #18181b;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+            transition: opacity 0.2s ease;
+        }
+
+        .cover.loading {
+            opacity: 0.55;
         }
 
         .meta {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 3px;
             min-width: 0;
+            flex: 1;
         }
 
         .title {
-            font-size: 1.35rem;
+            font-size: clamp(1.05rem, 4.2vw, 1.32rem);
             font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
+            letter-spacing: -0.015em;
+            line-height: 1.25;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
         }
 
         .artist {
-            font-size: 0.92rem;
+            font-size: clamp(0.82rem, 3.3vw, 0.94rem);
             font-weight: 500;
             color: var(--text-muted);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
         }
 
         .status-note {
             font-size: 0.78rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.75);
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.88);
             display: none;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
         }
 
-        .status-note.visible {
-            display: block;
+        .status-note.visible { display: block; }
+        .status-note.error { color: #ff5c7a; }
+
+        /* Yükleme halkası (küçük) */
+        .status-note.loading::before {
+            content: "";
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            margin-right: 7px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.28);
+            border-top-color: #ffffff;
+            animation: spin 0.7s linear infinite;
+            vertical-align: -1px;
         }
 
-        .status-note.error {
-            color: #ff4d6d;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* İlerleme Çubuğu */
+        /* Zaman Çubuğu */
         .timeline {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+            width: 100%;
         }
 
         .scrubber {
             position: relative;
-            height: 16px;
+            height: 22px;
             display: flex;
             align-items: center;
             cursor: pointer;
@@ -170,6 +235,17 @@
             height: 6px;
         }
 
+        .scrubber-buffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            border-radius: 999px;
+            background-color: rgba(255, 255, 255, 0.22);
+            transition: width 0.2s linear;
+        }
+
         .scrubber-fill {
             position: relative;
             width: 0%;
@@ -181,14 +257,14 @@
         .scrubber-knob {
             position: absolute;
             top: 50%;
-            right: -6px;
-            width: 12px;
-            height: 12px;
+            right: -7px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background-color: #ffffff;
             transform: translateY(-50%) scale(0);
             transition: transform 0.14s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
         }
 
         .scrubber:hover .scrubber-knob,
@@ -199,46 +275,45 @@
         .timestamps {
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem;
-            font-weight: 500;
+            font-size: 0.74rem;
+            font-weight: 600;
             color: var(--text-muted);
             font-variant-numeric: tabular-nums;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
         }
 
-        /* Kontrol Satırı */
+        /* Kontroller */
         .controls {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
         }
 
-        .controls-left {
+        .controls-left,
+        .controls-right {
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            gap: 4px;
         }
+
+        .controls-left { justify-content: flex-start; }
+        .controls-right { justify-content: flex-end; }
 
         .controls-center {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 18px;
-        }
-
-        .controls-right {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
+            gap: 6px;
         }
 
         .icon-btn {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border: none;
             border-radius: 50%;
             background: transparent;
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.9);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -246,38 +321,17 @@
             transition: background-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
         }
 
-        .icon-btn:hover {
-            background-color: var(--hover-bg);
-            color: #ffffff;
-        }
+        .icon-btn:hover { background-color: var(--hover-bg); color: #fff; }
+        .icon-btn:active { transform: scale(0.92); }
+        .icon-btn.active { color: var(--accent); }
+        .icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
 
-        .icon-btn:active {
-            transform: scale(0.92);
-        }
-
-        .icon-btn.active {
-            color: var(--accent);
-        }
-
-        .icon-btn svg {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
-
-        .track-nav-btn {
-            width: 44px;
-            height: 44px;
-        }
-
-        .track-nav-btn svg {
-            width: 25px;
-            height: 25px;
-        }
+        .track-nav-btn svg { width: 24px; height: 24px; }
 
         .play-btn {
-            width: 56px;
-            height: 56px;
+            position: relative;
+            width: 58px;
+            height: 58px;
             border: none;
             border-radius: 50%;
             background-color: #ffffff;
@@ -286,36 +340,30 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             transition: transform 0.16s ease, background-color 0.18s ease;
+            flex-shrink: 0;
         }
 
-        .play-btn:hover {
-            background-color: #f4f4f5;
-            transform: scale(1.05);
+        .play-btn:hover { background-color: #f4f4f5; transform: scale(1.04); }
+        .play-btn:active { transform: scale(0.96); }
+        .play-btn svg { width: 26px; height: 26px; fill: currentColor; }
+
+        .play-btn.buffering::after {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
         }
 
-        .play-btn:active {
-            transform: scale(0.96);
-        }
-
-        .play-btn svg {
-            width: 26px;
-            height: 26px;
-            fill: currentColor;
-        }
-
-        /* Ses Kontrolü */
-        .volume-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
+        /* Ses */
         .volume-slider {
             -webkit-appearance: none;
             appearance: none;
-            width: 88px;
+            width: 78px;
             height: 4px;
             border-radius: 999px;
             background: var(--track-bg);
@@ -326,98 +374,82 @@
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 13px;
+            height: 13px;
             border-radius: 50%;
             background: #ffffff;
             cursor: pointer;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
         }
 
         .volume-slider::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
+            width: 13px;
+            height: 13px;
             border: none;
             border-radius: 50%;
             background: #ffffff;
             cursor: pointer;
-            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
         }
 
-        /* Play Tuşunun Altındaki Yukarı Kaydırma Tutamacı */
+        .volume-group { display: flex; align-items: center; gap: 6px; }
+
+        /* Not panelini açma tutamacı */
         .drawer-trigger {
-            margin: 2px auto 0 auto;
-            padding: 8px 22px 6px 22px;
+            margin: 0 auto;
+            padding: 6px 22px 2px 22px;
             background: transparent;
             border: none;
-            color: rgba(255, 255, 255, 0.72);
+            color: rgba(255, 255, 255, 0.82);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             cursor: grab;
             touch-action: none;
             transition: color 0.2s ease, transform 0.2s ease;
         }
 
-        .drawer-trigger:hover {
-            color: #ffffff;
-            transform: translateY(-2px);
-        }
-
-        .drawer-trigger:active {
-            cursor: grabbing;
-        }
-
+        .drawer-trigger:hover { color: #fff; transform: translateY(-2px); }
         .trigger-pill {
-            width: 40px;
+            width: 42px;
             height: 4px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.5);
             transition: background 0.2s ease, width 0.2s ease;
         }
-
-        .drawer-trigger:hover .trigger-pill {
-            width: 52px;
-            background: #ffffff;
-        }
-
+        .drawer-trigger:hover .trigger-pill { width: 54px; background: #fff; }
         .trigger-label {
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
             text-transform: uppercase;
-            opacity: 0.85;
+            opacity: 0.9;
         }
 
-        /* Siyah Sürgülü Mektup Paneli (Bottom Sheet) */
+        /* ---- Mektup Paneli (Bottom Sheet) ---- */
         .note-backdrop {
             position: fixed;
             inset: 0;
             z-index: 30;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.35s ease;
+            transition: opacity 0.32s ease;
         }
-
-        .note-backdrop.open {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .note-backdrop.open { opacity: 1; pointer-events: auto; }
 
         .note-sheet {
             position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
-            height: 84vh;
-            max-height: 760px;
+            height: 88vh;
+            max-height: 820px;
             z-index: 40;
-            background: linear-gradient(180deg, #0b0b0d 0%, #050506 100%);
-            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(180deg, #0c0c0f 0%, #050506 100%);
+            border-top: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 26px 26px 0 0;
             box-shadow: 0 -24px 64px rgba(0, 0, 0, 0.92);
             display: flex;
@@ -426,32 +458,26 @@
             transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
             will-change: transform;
         }
-
-        .note-sheet.open {
-            transform: translateY(0);
-        }
-
-        .note-sheet.dragging {
-            transition: none;
-        }
+        .note-sheet.open { transform: translateY(0); }
+        .note-sheet.dragging { transition: none; }
 
         .sheet-handle-area {
-            padding: 14px 24px 10px 24px;
+            padding: 12px 22px 10px 22px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             cursor: grab;
             touch-action: none;
             flex-shrink: 0;
         }
 
         .sheet-handle-bar {
-            width: 44px;
+            width: 46px;
             height: 4px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.32);
         }
 
         .sheet-top-bar {
@@ -460,57 +486,46 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
         }
 
         .sheet-badge {
-            font-size: 0.76rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.55);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .sheet-close-btn {
             width: 34px;
             height: 34px;
+            flex-shrink: 0;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: background 0.2s ease, color 0.2s ease;
         }
+        .sheet-close-btn:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 
-        .sheet-close-btn:hover {
-            background: rgba(255, 255, 255, 0.14);
-            color: #ffffff;
-        }
-
-        /* Kaydırılabilir Duygusal Metin Alanı */
         .letter-scroll {
             flex: 1;
             overflow-y: auto;
-            padding: 36px 28px 90px 28px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 30px 22px calc(60px + var(--safe-b)) 22px;
             display: flex;
             justify-content: center;
-            scroll-behavior: smooth;
-            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 90%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 90%, transparent 100%);
         }
 
-        .letter-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .letter-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
+        .letter-scroll::-webkit-scrollbar { width: 4px; }
         .letter-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.24);
             border-radius: 999px;
         }
 
@@ -519,25 +534,25 @@
             max-width: 620px;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 22px;
         }
 
         .letter-heading {
-            font-size: 1.75rem;
+            font-size: clamp(1.3rem, 5.5vw, 1.7rem);
             font-weight: 700;
-            letter-spacing: -0.025em;
-            line-height: 1.3;
+            letter-spacing: -0.02em;
+            line-height: 1.35;
             color: #ffffff;
         }
 
         .letter-line {
-            font-size: 1.08rem;
-            line-height: 1.85;
-            color: rgba(255, 255, 255, 0.86);
+            font-size: clamp(1rem, 4.1vw, 1.08rem);
+            line-height: 1.78;
+            color: rgba(255, 255, 255, 0.94);
             font-weight: 400;
-            opacity: 0.28;
-            transform: translateY(12px);
-            transition: opacity 0.65s ease, transform 0.65s ease, color 0.65s ease;
+            opacity: 0.55;
+            transform: translateY(10px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
         }
 
         .letter-line.in-view {
@@ -545,91 +560,129 @@
             transform: translateY(0);
         }
 
-        .letter-line strong {
-            color: #ffffff;
-            font-weight: 600;
-        }
+        .letter-line strong { color: #ffffff; font-weight: 700; }
 
         .letter-quote {
-            padding: 18px 22px;
-            border-left: 2px solid var(--accent);
-            background: rgba(255, 255, 255, 0.03);
+            padding: 16px 20px;
+            border-left: 3px solid var(--accent);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 0 12px 12px 0;
-            font-size: 1.05rem;
-            line-height: 1.8;
-            color: rgba(255, 255, 255, 0.94);
+            font-size: clamp(0.98rem, 4vw, 1.05rem);
+            line-height: 1.75;
+            color: #ffffff;
             font-style: italic;
         }
 
         .letter-sign {
-            margin-top: 12px;
-            padding-top: 22px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 6px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.14);
             font-size: 1rem;
             line-height: 1.7;
-            color: rgba(255, 255, 255, 0.72);
+            color: rgba(255, 255, 255, 0.86);
         }
 
         .letter-sign span {
             display: block;
-            margin-top: 6px;
-            font-size: 1.15rem;
+            margin-top: 4px;
+            font-size: 1.18rem;
             font-weight: 700;
             color: #ffffff;
         }
 
-        @media (max-width: 640px) {
-            .player {
-                padding: 0 20px 14px 20px;
-                gap: 12px;
-            }
+        /* ---- Yükle / Kur bildirimi ---- */
+        .install-bar {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            top: calc(12px + var(--safe-t));
+            z-index: 50;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(16, 16, 20, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
 
-            .cover {
-                width: 56px;
-                height: 56px;
-            }
+        .install-bar.visible { display: flex; }
 
-            .title {
-                font-size: 1.15rem;
-            }
+        .install-text {
+            flex: 1;
+            font-size: 0.83rem;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 500;
+        }
 
-            .controls-center {
-                gap: 10px;
-            }
+        .install-text b { font-weight: 700; }
 
-            .volume-slider {
-                display: none;
-            }
+        .install-btn {
+            flex-shrink: 0;
+            border: none;
+            border-radius: 999px;
+            padding: 9px 16px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+        }
 
-            .note-sheet {
-                height: 88vh;
-            }
+        .install-close {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+        }
 
-            .letter-heading {
-                font-size: 1.45rem;
-            }
+        @media (max-width: 560px) {
+            /* Telefonda ses tuşları zaten cihazın kendi tuşları: kaydırıcıyı kaldır,
+               kalan alanı büyük dokunma hedeflerine ver. */
+            .volume-group .volume-slider { display: none; }
+            .icon-btn { width: 44px; height: 44px; }
+            .controls-center { gap: 4px; }
+        }
 
-            .letter-line {
-                font-size: 1rem;
-                line-height: 1.8;
-            }
+        @media (max-width: 420px) {
+            .volume-slider { width: 62px; }
+            .controls-center { gap: 2px; }
+            .icon-btn { width: 40px; height: 40px; }
+            .play-btn { width: 54px; height: 54px; }
+        }
+
+        @media (max-width: 360px) {
+            .volume-group .volume-slider { display: none; }
+        }
+
+        @media (min-width: 900px) {
+            .player { padding: 22px 48px 22px 48px; }
         }
     </style>
 </head>
 <body>
 
-    <video id="bgVideo" src="asset/videom.mp4" class="bg-video" autoplay muted loop playsinline></video>
+    <video id="bgVideo" class="bg-video" poster="asset/videom-poster.webp" autoplay muted loop playsinline preload="auto">
+        <source src="asset/videom-hd.mp4" type="video/mp4">
+        <source src="asset/videom.mp4" type="video/mp4">
+    </video>
     <div class="vignette"></div>
-    <audio id="audio" src="asset/Rafat-Hasanli-Kisa-Mesafe-94.mp3" autoplay loop preload="auto"></audio>
+
+    <audio id="audio" preload="auto" playsinline></audio>
 
     <main class="player" id="playerArea">
         <div class="track-header">
-            <img
-                id="coverImg"
-                src="asset/rafet.jpg"
-                alt="Albüm kapağı"
-                class="cover"
-            >
+            <img id="coverImg" src="asset/rafet.jpg" alt="Albüm kapağı" class="cover" decoding="async">
             <div class="meta">
                 <h1 id="trackTitle" class="title">Kısa Mesafe</h1>
                 <p id="trackArtist" class="artist">Rafat Hasanlı</p>
@@ -640,6 +693,7 @@
         <div class="timeline">
             <div id="scrubber" class="scrubber" role="slider" aria-label="Şarkı zamanı" tabindex="0">
                 <div class="scrubber-track">
+                    <div id="scrubberBuffer" class="scrubber-buffer"></div>
                     <div id="scrubberFill" class="scrubber-fill">
                         <span class="scrubber-knob"></span>
                     </div>
@@ -653,7 +707,7 @@
 
         <div class="controls">
             <div class="controls-left">
-                <button id="loopBtn" class="icon-btn active" type="button" title="Tekrarla" aria-label="Tekrarla">
+                <button id="loopBtn" class="icon-btn" type="button" title="Tekrarla" aria-label="Tekrarla">
                     <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
                 </button>
             </div>
@@ -668,7 +722,7 @@
                 </button>
 
                 <button id="playBtn" class="play-btn" type="button" title="Oynat / Duraklat" aria-label="Oynat / Duraklat">
-                    <svg id="iconPlay" viewBox="0 0 24 24" style="display: none; margin-left: 2px;"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="iconPlay" viewBox="0 0 24 24" style="display:none;margin-left:2px;"><path d="M8 5v14l11-7z"/></svg>
                     <svg id="iconPause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
 
@@ -685,21 +739,27 @@
                 <div class="volume-group">
                     <button id="muteBtn" class="icon-btn" type="button" title="Sesi kapat / aç" aria-label="Sesi kapat / aç">
                         <svg id="iconVolOn" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                        <svg id="iconVolOff" viewBox="0 0 24 24" style="display: none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                        <svg id="iconVolOff" viewBox="0 0 24 24" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
                     </button>
                     <input id="volumeSlider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="1" aria-label="Ses seviyesi">
                 </div>
             </div>
         </div>
 
-        <!-- Play Tuşunun Altındaki Yukarı Kaydırma Tutamacı -->
         <button id="drawerTrigger" class="drawer-trigger" type="button" aria-label="Notu açmak için yukarı kaydır veya tıkla">
             <span class="trigger-pill"></span>
             <span class="trigger-label">Sana Bir Notum Var • Yukarı Kaydır</span>
         </button>
     </main>
 
-    <!-- Siyah Sürgülü Mektup Paneli -->
+    <!-- Telefona yükle / ana ekrana ekle bildirimi -->
+    <div id="installBar" class="install-bar" role="dialog" aria-live="polite">
+        <p id="installText" class="install-text"><b>Telefona yükle:</b> tam ekran, adres çubuğu olmadan açılır.</p>
+        <button id="installBtn" class="install-btn" type="button">Yükle</button>
+        <button id="installClose" class="install-close" type="button" aria-label="Kapat">✕</button>
+    </div>
+
+    <!-- Mektup Paneli -->
     <div id="noteBackdrop" class="note-backdrop"></div>
     <section id="noteSheet" class="note-sheet" aria-label="Sudenur'a Doğum Günü Notu">
         <div id="sheetHandle" class="sheet-handle-area">
@@ -749,65 +809,38 @@
     </section>
 
     <script>
-        // ŞARKI LİSTESİ
+        'use strict';
+
+        // ---------------------------------------------------------------
+        // ÇALMA LİSTESİ
+        // Not: dosya adları büyük/küçük harf duyarlıdır (Vercel/Linux).
+        //       "dilerimki.mp3" küçük harfle başlar.
+        // ---------------------------------------------------------------
+        const ASSET_VERSION = '3';
+        const v = (path) => `${path}?v=${ASSET_VERSION}`;
+
         const PLAYLIST = [
-            {
-                title: 'Kısa Mesafe',
-                artist: 'Rafat Hasanlı',
-                audioSrc: 'asset/Rafat-Hasanli-Kisa-Mesafe-94.mp3',
-                coverSrc: 'asset/rafet.jpg'
-            },
-            {
-                title: 'Gözüm Görmesin Seni',
-                artist: 'Diyar Pala',
-                audioSrc: 'asset/Diyar-Pala-Anla.mp3',
-                coverSrc: 'asset/diyar.jpg'
-            },
-            {
-                title: 'Bir derdim var',
-                artist: 'Mor ve Ötesi',
-                audioSrc: 'asset/Mor-Ve-Otesi-Bir-Derdim-Var.mp3',
-                coverSrc: 'asset/mor.jpg'
-            },
-            {
-                title: 'Dilerim ki',
-                artist: 'Dolu Kadehi Ters Tut',
-                audioSrc: 'asset/Dilerimki.mp3',
-                coverSrc: 'asset/dkkt.jpg'
-            },
-            {
-                title: 'Seni Bana Yazmışlar',
-                artist: 'Velet',
-                audioSrc: 'asset/velet-seni-bana-yazmislar-35.mp3',
-                coverSrc: 'asset/velet.webp'
-            },
-            {
-                title: 'Ay Kızım',
-                artist: 'Eypio',
-                audioSrc: 'asset/Eypio-Ay-Kizim.mp3',
-                coverSrc: 'asset/eypio.jpg'
-            },
-            {
-                title: 'B.',
-                artist: 'Anıl Emre Daldal',
-                audioSrc: 'asset/Anil-Emre-Daldal-B-68.mp3',
-                coverSrc: 'asset/b.webp'
-            },
-            {
-                title: 'Bitanem',
-                artist: 'Stap',
-                audioSrc: 'asset/Stap-Bitanem-27.mp3',
-                coverSrc: 'asset/stap.webp'
-            }
-        ];
+            { title: 'Kısa Mesafe',        artist: 'Rafat Hasanlı',           audioSrc: 'asset/audio-opt/Rafat-Hasanli-Kisa-Mesafe-94.mp3', coverSrc: 'asset/rafet.jpg' },
+            { title: 'Gözüm Görmesin Seni',artist: 'Diyar Pala',              audioSrc: 'asset/audio-opt/Diyar-Pala-Anla.mp3',             coverSrc: 'asset/diyar.jpg' },
+            { title: 'Bir Derdim Var',     artist: 'Mor ve Ötesi',            audioSrc: 'asset/audio-opt/Mor-Ve-Otesi-Bir-Derdim-Var.mp3', coverSrc: 'asset/mor.jpg' },
+            { title: 'Dilerim Ki',         artist: 'Dolu Kadehi Ters Tut',    audioSrc: 'asset/audio-opt/dilerimki.mp3',                   coverSrc: 'asset/dkkt.jpg' },
+            { title: 'Seni Bana Yazmışlar',artist: 'Velet',                   audioSrc: 'asset/audio-opt/velet-seni-bana-yazmislar-35.mp3',coverSrc: 'asset/velet.webp' },
+            { title: 'Ay Kızım',           artist: 'Eypio',                   audioSrc: 'asset/audio-opt/Eypio-Ay-Kizim.mp3',              coverSrc: 'asset/eypio.jpg' },
+            { title: 'B.',                 artist: 'Anıl Emre Daldal',        audioSrc: 'asset/audio-opt/Anil-Emre-Daldal-B-68.mp3',       coverSrc: 'asset/b.webp' },
+            { title: 'Bitanem',            artist: 'Stap',                    audioSrc: 'asset/audio-opt/Stap-Bitanem-27.mp3',             coverSrc: 'asset/stap.webp' }
+        ].map((t) => ({ ...t, audioSrc: v(t.audioSrc), coverSrc: v(t.coverSrc) }));
 
         const FALLBACK_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 24 24'><rect width='24' height='24' fill='%2318181b'/><path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z' fill='%23a1a1aa'/></svg>";
 
+        // ---------------------------------------------------------------
+        // ELEMENTLER
+        // ---------------------------------------------------------------
         const audio = document.getElementById('audio');
         const bgVideo = document.getElementById('bgVideo');
         const coverImg = document.getElementById('coverImg');
         const trackTitleEl = document.getElementById('trackTitle');
         const trackArtistEl = document.getElementById('trackArtist');
+        const statusNote = document.getElementById('statusNote');
         const playBtn = document.getElementById('playBtn');
         const prevTrackBtn = document.getElementById('prevTrackBtn');
         const nextTrackBtn = document.getElementById('nextTrackBtn');
@@ -815,6 +848,7 @@
         const iconPause = document.getElementById('iconPause');
         const scrubber = document.getElementById('scrubber');
         const scrubberFill = document.getElementById('scrubberFill');
+        const scrubberBuffer = document.getElementById('scrubberBuffer');
         const currentTimeEl = document.getElementById('currentTime');
         const totalTimeEl = document.getElementById('totalTime');
         const rewindBtn = document.getElementById('rewindBtn');
@@ -824,9 +858,7 @@
         const iconVolOn = document.getElementById('iconVolOn');
         const iconVolOff = document.getElementById('iconVolOff');
         const volumeSlider = document.getElementById('volumeSlider');
-        const statusNote = document.getElementById('statusNote');
 
-        // Panel elementleri
         const drawerTrigger = document.getElementById('drawerTrigger');
         const noteBackdrop = document.getElementById('noteBackdrop');
         const noteSheet = document.getElementById('noteSheet');
@@ -835,75 +867,211 @@
         const letterScroll = document.getElementById('letterScroll');
         const letterLines = document.querySelectorAll('.letter-line');
 
+        const installBar = document.getElementById('installBar');
+        const installText = document.getElementById('installText');
+        const installBtn = document.getElementById('installBtn');
+        const installClose = document.getElementById('installClose');
+
+        // ---------------------------------------------------------------
+        // DURUM
+        // ---------------------------------------------------------------
         let currentTrackIndex = 0;
         let isDragging = false;
         let lastNonZeroVolume = 1;
         let autoplayBlocked = false;
-        let videoFallbackTried = false;
+        let errorCount = 0;          // ard arda hata olursa sonsuz döngüye girmesin
+        let pendingPlay = false;     // kullanıcı çalmak istedi, yükleme bitince başlat
+        let warmAudio = null;        // sıradaki şarkıyı önden indiren gizli nesne
+        let statusTimer = null;
 
-        coverImg.addEventListener('error', () => {
-            if (coverImg.src !== FALLBACK_COVER) {
-                coverImg.src = FALLBACK_COVER;
-            }
-        });
+        audio.preload = 'auto';
+        audio.volume = 1;
 
-        bgVideo.addEventListener('error', () => {
-            if (!videoFallbackTried) {
-                videoFallbackTried = true;
-                bgVideo.src = 'videom.mp4';
-                bgVideo.load();
-                bgVideo.play().catch(() => {});
-            } else {
-                setStatus('Video yüklenemedi: asset/videom.mp4 yolunu kontrol et.', true);
-            }
-        });
-
-        function ensureVideoPlaying() {
-            bgVideo.muted = true;
-            bgVideo.loop = true;
-            if (bgVideo.paused) {
-                bgVideo.play().catch(() => {});
-            }
-        }
-
-        function setStatus(message, isError = false) {
+        // ---------------------------------------------------------------
+        // DURUM YAZISI
+        // ---------------------------------------------------------------
+        function setStatus(message, kind = '') {
+            clearTimeout(statusTimer);
             if (!message) {
                 statusNote.textContent = '';
                 statusNote.className = 'status-note';
                 return;
             }
             statusNote.textContent = message;
-            statusNote.className = isError ? 'status-note visible error' : 'status-note visible';
+            statusNote.className = 'status-note visible' + (kind ? ' ' + kind : '');
+            if (kind === 'loading') {
+                // 12 sn sonra hâlâ yüklenmediyse bilgi ver, sonsuz spinner bırakma
+                statusTimer = setTimeout(() => {
+                    if (statusNote.classList.contains('loading')) {
+                        setStatus('Bağlantı yavaş görünüyor, şarkı hazırlanıyor…', 'loading');
+                    }
+                }, 12000);
+            }
+        }
+
+        function setBuffering(on) {
+            playBtn.classList.toggle('buffering', on);
         }
 
         function formatTime(sec) {
             if (!Number.isFinite(sec) || sec < 0) return '0:00';
-            const minutes = Math.floor(sec / 60);
-            const seconds = Math.floor(sec % 60);
-            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // Şarkı Yükleme ve Değiştirme (Video hiç kesilmeden aynı kalır)
-        function loadTrack(index, shouldPlay = true) {
-            currentTrackIndex = (index + PLAYLIST.length) % PLAYLIST.length;
-            const track = PLAYLIST[currentTrackIndex];
+        // ---------------------------------------------------------------
+        // ARKA PLAN VİDEO
+        // ---------------------------------------------------------------
+        function ensureVideoPlaying() {
+            if (!bgVideo) return;
+            bgVideo.muted = true;
+            bgVideo.loop = true;
+            if (bgVideo.paused) {
+                const p = bgVideo.play();
+                if (p && p.catch) p.catch(() => {});
+            }
+        }
 
+        bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                bgVideo.pause();
+            } else {
+                ensureVideoPlaying();
+            }
+        });
+
+        // ---------------------------------------------------------------
+        // ŞARKI YÜKLEME
+        // ---------------------------------------------------------------
+        function currentTrack() {
+            return PLAYLIST[currentTrackIndex];
+        }
+
+        function prefetchNext() {
+            const nextIndex = (currentTrackIndex + 1) % PLAYLIST.length;
+            const next = PLAYLIST[nextIndex];
+            if (!next || !next.audioSrc) return;
+            // Aynı dosyayı önden çekip HTTP cache'e alır; geçiş anında bekleme olmaz.
+            if (warmAudio) {
+                warmAudio.src = '';
+                warmAudio = null;
+            }
+            warmAudio = new Audio();
+            warmAudio.preload = 'auto';
+            warmAudio.src = next.audioSrc;
+            warmAudio.load();
+        }
+
+        function renderTrackInfo(track) {
             trackTitleEl.textContent = track.title;
             trackArtistEl.textContent = track.artist;
             document.title = `${track.title} — ${track.artist}`;
             coverImg.src = track.coverSrc || FALLBACK_COVER;
+        }
+
+        function updateMediaSession(track) {
+            if (!('mediaSession' in navigator)) return;
+            try {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: track.title,
+                    artist: track.artist,
+                    album: 'Sudenur için',
+                    artwork: track.coverSrc ? [{ src: track.coverSrc, sizes: '512x512', type: 'image/jpeg' }] : []
+                });
+            } catch (e) { /* desteklenmiyorsa sorun değil */ }
+        }
+
+        /**
+         * @param {number} index
+         * @param {boolean} shouldPlay  kullanıcı isteği mi?
+         */
+        function loadTrack(index, shouldPlay = true) {
+            currentTrackIndex = (index + PLAYLIST.length) % PLAYLIST.length;
+            const track = currentTrack();
+
+            renderTrackInfo(track);
+            updateMediaSession(track);
 
             scrubberFill.style.width = '0%';
+            scrubberBuffer.style.width = '0%';
             currentTimeEl.textContent = '0:00';
             totalTimeEl.textContent = '0:00';
-            setStatus('');
 
+            pendingPlay = shouldPlay;
+            setBuffering(shouldPlay);
+            setStatus(shouldPlay ? 'Şarkı hazırlanıyor…' : '', shouldPlay ? 'loading' : '');
+            coverImg.classList.add('loading');
+
+            // src atamak yüklemeyi kendiliğinden başlatır; ayrıca load() çağırmıyoruz
+            // (gereksiz ikinci istek = mobilde gecikme).
             audio.src = track.audioSrc;
-            audio.load();
-            ensureVideoPlaying();
 
+            // Kullanıcı hareketi varsa mümkün olan en kısa sürede başlat:
+            // tarayıcı canplay beklerken play() çağrısı sıraya alınır.
             if (shouldPlay) {
-                attemptPlay(true);
+                tryStartPlayback();
+            } else {
+                syncPlaybackUI();
+            }
+
+            prefetchNext();
+        }
+
+        function tryStartPlayback() {
+            ensureVideoPlaying();
+            const p = audio.play();
+            if (p && typeof p.then === 'function') {
+                p.then(() => {
+                    pendingPlay = false;
+                    setBuffering(false);
+                    syncPlaybackUI();
+                }).catch((err) => {
+                    pendingPlay = false;
+                    setBuffering(false);
+                    syncPlaybackUI();
+                    if (err && err.name === 'NotAllowedError') {
+                        autoplayBlocked = true;
+                        setStatus('Başlatmak için oynat tuşuna dokun');
+                    } else if (err && err.name !== 'AbortError') {
+                        setStatus('Şarkı başlatılamadı, tekrar deneniyor…', 'error');
+                    }
+                });
+            }
+        }
+
+        function attemptPlay(fromUserGesture = false) {
+            ensureVideoPlaying();
+            if (!audio.src) {
+                loadTrack(currentTrackIndex, true);
+                return;
+            }
+            pendingPlay = true;
+            setBuffering(true);
+            if (!audio.paused) {
+                pendingPlay = false;
+                setBuffering(false);
+                syncPlaybackUI();
+                return;
+            }
+            setStatus(fromUserGesture ? 'Şarkı hazırlanıyor…' : 'Şarkı hazırlanıyor…', 'loading');
+            const p = audio.play();
+            if (p && typeof p.then === 'function') {
+                p.then(() => {
+                    pendingPlay = false;
+                    setBuffering(false);
+                    syncPlaybackUI();
+                }).catch((err) => {
+                    pendingPlay = false;
+                    setBuffering(false);
+                    syncPlaybackUI();
+                    if (!audio.error && err && err.name === 'NotAllowedError') {
+                        autoplayBlocked = true;
+                        setStatus('Başlatmak için oynat tuşuna dokun');
+                    }
+                });
             } else {
                 syncPlaybackUI();
             }
@@ -914,30 +1082,11 @@
             iconPlay.style.display = paused ? 'block' : 'none';
             iconPause.style.display = paused ? 'none' : 'block';
             document.body.classList.toggle('is-paused', paused);
-
             if (!paused) {
-                setStatus('');
                 autoplayBlocked = false;
+                if (!statusNote.classList.contains('error')) setStatus('');
             }
             ensureVideoPlaying();
-        }
-
-        function attemptPlay(fromUserGesture = false) {
-            ensureVideoPlaying();
-            const promise = audio.play();
-            if (promise && typeof promise.then === 'function') {
-                promise.then(() => {
-                    syncPlaybackUI();
-                }).catch((err) => {
-                    syncPlaybackUI();
-                    if (!audio.error && !fromUserGesture && err && err.name === 'NotAllowedError') {
-                        autoplayBlocked = true;
-                        setStatus('Tarayıcı otomatik sesi engelledi — başlatmak için tıkla.');
-                    }
-                });
-            } else {
-                syncPlaybackUI();
-            }
         }
 
         function togglePlayback() {
@@ -958,11 +1107,28 @@
         }
 
         function updateTimelineUI() {
-            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
-            const pct = Math.min(100, Math.max(0, (audio.currentTime / audio.duration) * 100));
-            scrubberFill.style.width = `${pct}%`;
+            const duration = audio.duration;
+            if (Number.isFinite(duration) && duration > 0) {
+                const pct = Math.min(100, Math.max(0, (audio.currentTime / duration) * 100));
+                scrubberFill.style.width = `${pct}%`;
+                totalTimeEl.textContent = formatTime(duration);
+            }
             currentTimeEl.textContent = formatTime(audio.currentTime);
-            totalTimeEl.textContent = formatTime(audio.duration);
+            updateBufferUI();
+        }
+
+        function updateBufferUI() {
+            const duration = audio.duration;
+            if (!Number.isFinite(duration) || duration <= 0 || !audio.buffered || audio.buffered.length === 0) return;
+            // Kullanıcının bulunduğu noktayı kapsayan aralığı bul
+            let end = audio.buffered.end(audio.buffered.length - 1);
+            for (let i = 0; i < audio.buffered.length; i++) {
+                if (audio.buffered.start(i) <= audio.currentTime && audio.currentTime <= audio.buffered.end(i)) {
+                    end = audio.buffered.end(i);
+                    break;
+                }
+            }
+            scrubberBuffer.style.width = `${Math.min(100, (end / duration) * 100)}%`;
         }
 
         function seekFromClientX(clientX) {
@@ -973,7 +1139,9 @@
             updateTimelineUI();
         }
 
-        // Oynatıcı Kontrolleri
+        // ---------------------------------------------------------------
+        // OYNATICI KONTROLLERİ
+        // ---------------------------------------------------------------
         playBtn.addEventListener('click', togglePlayback);
 
         prevTrackBtn.addEventListener('click', () => {
@@ -985,9 +1153,7 @@
             }
         });
 
-        nextTrackBtn.addEventListener('click', () => {
-            loadTrack(currentTrackIndex + 1, true);
-        });
+        nextTrackBtn.addEventListener('click', () => loadTrack(currentTrackIndex + 1, true));
 
         rewindBtn.addEventListener('click', () => {
             audio.currentTime = Math.max(0, audio.currentTime - 10);
@@ -1025,7 +1191,7 @@
             syncVolumeUI();
         });
 
-        // Zaman Çubuğu Sürükleme
+        // Zaman çubuğu sürükleme
         scrubber.addEventListener('pointerdown', (e) => {
             isDragging = true;
             scrubber.classList.add('dragging');
@@ -1037,39 +1203,94 @@
             if (isDragging) seekFromClientX(e.clientX);
         });
 
-        scrubber.addEventListener('pointerup', (e) => {
+        const endDrag = (e) => {
             if (!isDragging) return;
             isDragging = false;
             scrubber.classList.remove('dragging');
-            scrubber.releasePointerCapture(e.pointerId);
+            try { scrubber.releasePointerCapture(e.pointerId); } catch (_) {}
+        };
+        scrubber.addEventListener('pointerup', endDrag);
+        scrubber.addEventListener('pointercancel', endDrag);
+
+        // ---------------------------------------------------------------
+        // AUDIO OLAYLARI — gecikmeyi gizleyen kritik kısım
+        // ---------------------------------------------------------------
+        audio.addEventListener('loadedmetadata', updateTimelineUI);
+
+        audio.addEventListener('progress', updateBufferUI);
+
+        // Meta bilgi gelir gelmez süreyi göster (dosya tamamen inmeyi beklemesin)
+        audio.addEventListener('durationchange', updateTimelineUI);
+
+        // Çalmaya hazır olur olmaz başlat
+        audio.addEventListener('canplay', () => {
+            coverImg.classList.remove('loading');
+            if (pendingPlay && audio.paused) {
+                tryStartPlayback();
+            }
         });
 
-        // Audio Olayları
-        audio.addEventListener('loadedmetadata', updateTimelineUI);
+        audio.addEventListener('canplaythrough', () => {
+            coverImg.classList.remove('loading');
+            setBuffering(false);
+            if (!statusNote.classList.contains('error')) setStatus('');
+        });
+
+        audio.addEventListener('playing', () => {
+            errorCount = 0;
+            pendingPlay = false;
+            setBuffering(false);
+            coverImg.classList.remove('loading');
+            setStatus('');
+            syncPlaybackUI();
+        });
+
+        audio.addEventListener('waiting', () => {
+            if (!audio.paused) setBuffering(true);
+        });
+
+        audio.addEventListener('stalled', () => {
+            if (!audio.paused) setStatus('Bağlantı bekleniyor…', 'loading');
+        });
+
         audio.addEventListener('timeupdate', () => {
             if (!isDragging) updateTimelineUI();
         });
+
         audio.addEventListener('play', syncPlaybackUI);
         audio.addEventListener('pause', syncPlaybackUI);
+        audio.addEventListener('volumechange', syncVolumeUI);
+
         audio.addEventListener('ended', () => {
-            if (!audio.loop) {
-                loadTrack(currentTrackIndex + 1, true);
-            }
+            if (!audio.loop) loadTrack(currentTrackIndex + 1, true);
         });
+
+        // Bir şarkı açılamazsa: kullanıcıyı boş ekranda bırakma, sonrakine geç.
         audio.addEventListener('error', () => {
-            const track = PLAYLIST[currentTrackIndex];
-            setStatus(`Ses dosyası bulunamadı: ${track.audioSrc}`, true);
+            const track = currentTrack();
+            errorCount += 1;
+            setBuffering(false);
+            coverImg.classList.remove('loading');
+            console.warn('[audio] yüklenemedi:', track.audioSrc, audio.error && audio.error.code);
+
+            if (errorCount >= PLAYLIST.length) {
+                setStatus('Ses dosyalarına ulaşılamıyor. Sayfayı yenilemeyi dene.', 'error');
+                return;
+            }
+
+            setStatus(`"${track.title}" açılamadı, sıradaki şarkıya geçiliyor…`, 'error');
+            setTimeout(() => loadTrack(currentTrackIndex + 1, true), 1400);
         });
 
-        // Tarayıcı autoplay engelini ilk kullanıcı dokunuşunda aş
-        document.addEventListener('pointerdown', () => {
+        // Tarayıcı otomatik sesi engellediyse ilk dokunuşta başlat
+        const unlockOnGesture = () => {
             ensureVideoPlaying();
-            if (autoplayBlocked && audio.paused) {
-                attemptPlay(true);
-            }
-        }, { once: true });
+            if (autoplayBlocked && audio.paused) attemptPlay(true);
+        };
+        document.addEventListener('pointerdown', unlockOnGesture, { once: true });
+        document.addEventListener('keydown', unlockOnGesture, { once: true });
 
-        // Klavye Kısayolları
+        // Klavye kısayolları
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -1085,8 +1306,21 @@
             }
         });
 
-        // Siyah Sürgülü Mektup Paneli (Bottom Sheet) Kontrolleri
+        // Kilit ekranı / kulaklık tuşları
+        if ('mediaSession' in navigator) {
+            try {
+                navigator.mediaSession.setActionHandler('play', () => attemptPlay(true));
+                navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); syncPlaybackUI(); });
+                navigator.mediaSession.setActionHandler('previoustrack', () => loadTrack(currentTrackIndex - 1, true));
+                navigator.mediaSession.setActionHandler('nexttrack', () => loadTrack(currentTrackIndex + 1, true));
+            } catch (_) {}
+        }
+
+        // ---------------------------------------------------------------
+        // MEKTUP PANELİ
+        // ---------------------------------------------------------------
         function openNoteSheet() {
+            installBar.classList.remove('visible');
             noteSheet.style.transform = '';
             noteSheet.classList.add('open');
             noteBackdrop.classList.add('open');
@@ -1103,18 +1337,12 @@
         closeSheetBtn.addEventListener('click', closeNoteSheet);
         noteBackdrop.addEventListener('click', closeNoteSheet);
 
-        // Tutamaçtan Yukarı Kaydırarak Açma
         let triggerStartY = 0;
-        drawerTrigger.addEventListener('pointerdown', (e) => {
-            triggerStartY = e.clientY;
-        });
+        drawerTrigger.addEventListener('pointerdown', (e) => { triggerStartY = e.clientY; });
         drawerTrigger.addEventListener('pointerup', (e) => {
-            if (triggerStartY - e.clientY > 24) {
-                openNoteSheet();
-            }
+            if (triggerStartY - e.clientY > 24) openNoteSheet();
         });
 
-        // Panel Üst Çubuğundan Aşağı Kaydırarak Kapatma
         let sheetStartY = 0;
         let sheetCurrentDelta = 0;
         let isSheetDragging = false;
@@ -1138,31 +1366,81 @@
             if (!isSheetDragging) return;
             isSheetDragging = false;
             noteSheet.classList.remove('dragging');
-            sheetHandle.releasePointerCapture(e.pointerId);
-
-            if (sheetCurrentDelta > 120) {
-                closeNoteSheet();
-            } else {
-                noteSheet.style.transform = '';
-            }
+            try { sheetHandle.releasePointerCapture(e.pointerId); } catch (_) {}
+            if (sheetCurrentDelta > 120) closeNoteSheet();
+            else noteSheet.style.transform = '';
         });
 
-        // Mektup Satırları Kaydırma Animasyonu
         function revealVisibleLines() {
             const containerRect = letterScroll.getBoundingClientRect();
             letterLines.forEach((line) => {
                 const rect = line.getBoundingClientRect();
-                if (rect.top < containerRect.bottom - 40) {
-                    line.classList.add('in-view');
-                }
+                if (rect.top < containerRect.bottom - 30) line.classList.add('in-view');
             });
         }
 
         letterScroll.addEventListener('scroll', revealVisibleLines, { passive: true });
 
-        // Başlangıç Durumu
+        // ---------------------------------------------------------------
+        // TELEFONA YÜKLE (PWA)
+        // ---------------------------------------------------------------
+        let deferredInstallPrompt = null;
+        const INSTALL_HIDE_KEY = 'sudem-install-hidden';
+
+        function showInstallBar(html, withButton) {
+            if (localStorage.getItem(INSTALL_HIDE_KEY) === '1') return;
+            installText.innerHTML = html;
+            installBtn.style.display = withButton ? 'inline-block' : 'none';
+            installBar.classList.add('visible');
+        }
+
+        installClose.addEventListener('click', () => {
+            installBar.classList.remove('visible');
+            localStorage.setItem(INSTALL_HIDE_KEY, '1');
+        });
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            showInstallBar('<b>Telefona yükle:</b> tam ekran, adres çubuğu olmadan açılır.', true);
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            try { await deferredInstallPrompt.userChoice; } catch (_) {}
+            deferredInstallPrompt = null;
+            installBar.classList.remove('visible');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBar.classList.remove('visible');
+            deferredInstallPrompt = null;
+        });
+
+        // iPhone / iPad: kurulum sadece "Ana Ekrana Ekle" ile yapılır
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+        if (isIOS && !isStandalone) {
+            setTimeout(() => {
+                showInstallBar('<b>Tam ekran için:</b> Safari’de <b>Paylaş</b> → <b>Ana Ekrana Ekle</b>.', false);
+            }, 4500);
+        }
+
+        // Service worker: ikinci açılışta şarkılar anında hazır
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        // ---------------------------------------------------------------
+        // BAŞLANGIÇ
+        // ---------------------------------------------------------------
         syncVolumeUI();
-        attemptPlay(false);
+        renderTrackInfo(currentTrack());
+        updateMediaSession(currentTrack());
+        loadTrack(0, true);
     </script>
 </body>
 </html>

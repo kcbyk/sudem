@@ -1,0 +1,17 @@
+{
+  "name": "Sudenur — Müzik Kutusu",
+  "short_name": "Sudem",
+  "description": "Sudenur için hazırlanmış küçük bir müzik kutusu.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "tr",
+  "icons": [
+    { "src": "icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "maskable" },
+    { "src": "og-image.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
