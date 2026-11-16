@@ -88,25 +88,22 @@
         }
 
         body.is-paused .bg-video {
-            filter: brightness(0.9) saturate(1.05) contrast(1.07);
+            filter: saturate(1.05) contrast(1.07);
         }
 
-        /* Yazıların okunabilirliği için degrade */
+        /* Yazıların okunabilirliği için degrade — video görünsün diye hafif tutuldu */
         .vignette {
             position: fixed;
             inset: 0;
             z-index: 2;
             pointer-events: none;
-            background:
-                linear-gradient(to top,
-                    rgba(0, 0, 0, 0.96) 0%,
-                    rgba(0, 0, 0, 0.90) 18%,
-                    rgba(0, 0, 0, 0.62) 40%,
-                    rgba(0, 0, 0, 0.20) 62%,
-                    rgba(0, 0, 0, 0) 82%),
-                linear-gradient(to bottom,
-                    rgba(0, 0, 0, 0.55) 0%,
-                    rgba(0, 0, 0, 0) 22%);
+            background: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.78) 0%,
+                rgba(0, 0, 0, 0.58) 22%,
+                rgba(0, 0, 0, 0.12) 48%,
+                rgba(0, 0, 0, 0) 68%
+            );
         }
 
         /* Alt Oynatıcı */
@@ -120,13 +117,11 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
-            background: linear-gradient(to top, rgba(6, 6, 8, 0.94) 0%, rgba(6, 6, 8, 0.78) 62%, rgba(6, 6, 8, 0) 100%);
-            backdrop-filter: blur(16px) saturate(1.15);
-            -webkit-backdrop-filter: blur(16px) saturate(1.15);
             max-width: 100%;
         }
 
         .track-header {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -135,15 +130,34 @@
         }
 
         .cover {
-            width: 58px;
-            height: 58px;
-            border-radius: 12px;
+            width: 78px;
+            height: 78px;
+            border-radius: 10px;
             object-fit: cover;
+            object-position: center;
+            image-rendering: -webkit-optimize-contrast;
+            backface-visibility: hidden;
             flex-shrink: 0;
             background-color: #18181b;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
-            transition: opacity 0.2s ease;
+            border: 1.5px solid rgba(255, 255, 255, 0.32);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        /* Çalan şarkının kapağından gelen yumuşak renk ışığı */
+        .cover-glow {
+            position: absolute;
+            left: -60px;
+            bottom: -70px;
+            width: 340px;
+            height: 300px;
+            border-radius: 50%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.55;
+            filter: blur(56px);
+            background: radial-gradient(circle, var(--cover-glow, rgba(255, 0, 51, 0.5)) 0%, transparent 70%);
+            transition: background 0.6s ease;
         }
 
         .cover.loading {
@@ -166,7 +180,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95), 0 0 24px rgba(0, 0, 0, 0.7);
         }
 
         .artist {
@@ -657,6 +671,7 @@
         }
 
         @media (max-width: 420px) {
+            .cover { width: 72px; height: 72px; }
             .volume-slider { width: 62px; }
             .controls-center { gap: 2px; }
             .icon-btn { width: 40px; height: 40px; }
@@ -683,7 +698,8 @@
 
     <main class="player" id="playerArea">
         <div class="track-header">
-            <img id="coverImg" src="asset/rafet.jpg" alt="Albüm kapağı" class="cover" decoding="async">
+            <span class="cover-glow" aria-hidden="true"></span>
+            <img id="coverImg" src="asset/rafet.jpg" alt="Albüm kapağı" class="cover" decoding="async" width="156" height="156">
             <div class="meta">
                 <h1 id="trackTitle" class="title">Kısa Mesafe</h1>
                 <p id="trackArtist" class="artist">Rafat Hasanlı</p>
@@ -948,15 +964,20 @@
         function loadBackgroundVideo() {
             if (!bgVideo || bgVideo.dataset.loaded === '1') return;
             bgVideo.dataset.loaded = '1';
+            bgVideo.dataset.quality = v('asset/videom-hd.mp4');
             bgVideo.src = v('asset/videom-hd.mp4');
             bgVideo.load();
             ensureVideoPlaying();
         }
 
         if (isSlowNetwork) {
-            // Video hiç indirilmez; kare kapak görseli arka planda kalır (siyah ekran olmaz).
-            bgVideo.poster = 'asset/videom-poster.webp?v=3';
-            bgVideo.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
+            // Video kapanmıyor: yavaş bağlantıda 3 kat hafif sürüm (0.6 Mbps) oynatılır,
+            // böylece hem akıcı kalır hem şarkıya yer kalır.
+            bgVideo.dataset.loaded = '1';
+            bgVideo.dataset.quality = v('asset/videom-sd.mp4');
+            bgVideo.src = v('asset/videom-sd.mp4');
+            bgVideo.load();
+            bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
         } else {
             bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
             // Önce şarkı başlasın, video arkasından gelsin (video şarkıyı geciktirmesin)
@@ -968,14 +989,14 @@
         // Bağlantı sonradan yavaşlarsa videoyu bırak, şarkıya yer aç
         if (conn.addEventListener) {
             conn.addEventListener('change', () => {
-                if (bgVideo && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) {
-                    bgVideo.pause();
-                    bgVideo.removeAttribute('src');
-                    bgVideo.load();
-                    bgVideo.dataset.loaded = '';
-                    bgVideo.poster = 'asset/videom-poster.webp?v=3';
-                    bgVideo.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
-                }
+                if (!bgVideo || bgVideo.dataset.loaded !== '1') return;
+                const nowSlow = conn.saveData === true || /(^|-)2g$/.test(conn.effectiveType || '') || /(^|-)3g$/.test(conn.effectiveType || '');
+                const want = nowSlow ? v('asset/videom-sd.mp4') : v('asset/videom-hd.mp4');
+                if (bgVideo.dataset.quality === want) return;
+                bgVideo.dataset.quality = want;
+                bgVideo.src = want;
+                bgVideo.load();
+                ensureVideoPlaying();
             });
         }
 
@@ -1039,11 +1060,45 @@
             prefetchNext();
         }
 
+        // Kapağın baskın rengini bulup arkaya yumuşak ışık olarak ver
+        function applyCoverGlow() {
+            const glowEl = document.querySelector('.cover-glow');
+            if (!glowEl || !coverImg.naturalWidth) return;
+            try {
+                const size = 24;
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = size;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(coverImg, 0, 0, size, size);
+                const data = ctx.getImageData(0, 0, size, size).data;
+                let r = 0, g = 0, b = 0, n = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                    if (lum < 20 || lum > 244) continue; // düz siyah/beyaz pikselleri atla
+                    r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+                }
+                if (!n) return;
+                r = r / n; g = g / n; b = b / n;
+                const boost = (c) => Math.min(255, Math.round(c * 1.35 + 20));
+                glowEl.style.setProperty('--cover-glow', `rgba(${boost(r)}, ${boost(g)}, ${boost(b)}, 0.6)`);
+            } catch (_) { /* canvas engellenirse sessizce geç */ }
+        }
+
+        coverImg.addEventListener('load', applyCoverGlow);
+        coverImg.addEventListener('error', () => {
+            if (coverImg.src !== FALLBACK_COVER) {
+                coverImg.src = FALLBACK_COVER;
+                applyCoverGlow();
+            }
+        });
+
         function renderTrackInfo(track) {
             trackTitleEl.textContent = track.title;
             trackArtistEl.textContent = track.artist;
             document.title = `${track.title} — ${track.artist}`;
             coverImg.src = track.coverSrc || FALLBACK_COVER;
+            coverImg.classList.add('loading');
+            if (coverImg.complete) applyCoverGlow();
         }
 
         function updateMediaSession(track) {
