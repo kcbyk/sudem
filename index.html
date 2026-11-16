@@ -554,6 +554,9 @@
             gap: 22px;
         }
 
+        /* Flex kolonunda öğeler sıkışıp çökmesin */
+        .letter-content > * { flex-shrink: 0; }
+
         .letter-heading {
             font-size: clamp(1.3rem, 5.5vw, 1.7rem);
             font-weight: 700;
@@ -1126,6 +1129,420 @@
 
         /* Oynatıcı alt bardan yukarıda dursun */
         .player { padding-bottom: calc(72px + var(--safe-b)); }
+
+        /* ================= NOTUM: papatya deneyimi ================= */
+        /* Caveat: latin-ext ve latin altkümeleri AYRI tanımlanmalı,
+           yoksa tarayıcı tek dosya kullanıp Türkçe/ASCII harfleri sistem fontuna düşürüyor. */
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 500;
+            font-display: swap;
+            src: url('asset/fonts/caveat-500-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 500;
+            font-display: swap;
+            src: url('asset/fonts/caveat-500-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 700;
+            font-display: swap;
+            src: url('asset/fonts/caveat-700-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 700;
+            font-display: swap;
+            src: url('asset/fonts/caveat-700-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('asset/fonts/caveat-500-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Caveat';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('asset/fonts/caveat-500-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+
+        .hand { font-family: 'Caveat', 'Segoe Script', cursive; }
+
+        /* Mührü kırma sahnesi */
+        .seal-stage {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 24px;
+            background: radial-gradient(circle at 50% 42%, #17110f 0%, #08080a 72%);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .seal-stage.gone {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .wax-seal {
+            position: relative;
+            width: 168px;
+            height: 168px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 34% 30%, #ff5470 0%, #d81b3c 38%, #8e0d24 72%, #5c0716 100%);
+            box-shadow:
+                0 18px 44px rgba(0, 0, 0, 0.72),
+                inset 0 4px 14px rgba(255, 255, 255, 0.22),
+                inset 0 -8px 18px rgba(0, 0, 0, 0.45);
+            cursor: pointer;
+            animation: sealFloat 3.4s ease-in-out infinite;
+            border: none;
+        }
+
+        /* mum kenarı dokusu */
+        .wax-seal::before {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(216, 27, 60, 0.55) 55%, rgba(216, 27, 60, 0) 72%);
+            filter: blur(6px);
+            z-index: -1;
+        }
+
+        .wax-seal svg { width: 124px; height: 124px; }
+
+        @keyframes sealFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-7px) scale(1.015); }
+        }
+
+        .wax-seal.cracked {
+            animation: sealBreak 0.85s cubic-bezier(0.3, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes sealBreak {
+            0% { transform: scale(1); opacity: 1; }
+            35% { transform: scale(1.14) rotate(-4deg); }
+            100% { transform: scale(0.2) rotate(18deg); opacity: 0; filter: blur(6px); }
+        }
+
+        .seal-title {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+            text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
+        }
+
+        .seal-hint {
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.55);
+            animation: hintPulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes hintPulse { 0%,100% { opacity: 0.45; } 50% { opacity: 0.95; } }
+
+        /* Düşen papatya yaprakları */
+        .petal-rain {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.55;
+        }
+
+        .letter-content { position: relative; z-index: 2; }
+
+        .petal-rain span {
+            position: absolute;
+            top: -8%;
+            width: 12px;
+            height: 12px;
+            opacity: 0;
+            animation: petalFall linear infinite;
+            will-change: transform, opacity;
+        }
+
+        .petal-rain svg { width: 100%; height: 100%; display: block; }
+
+        @keyframes petalFall {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+            8%   { opacity: 0.85; }
+            100% { transform: translate3d(var(--drift, 40px), 112vh, 0) rotate(var(--spin, 320deg)); opacity: 0; }
+        }
+
+        /* Canlı sayaç */
+        .since-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: linear-gradient(140deg, rgba(255, 0, 51, 0.14), rgba(255, 255, 255, 0.04));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .since-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .since-main {
+            font-family: 'Caveat', cursive;
+            font-size: clamp(1.6rem, 7vw, 2.1rem);
+            font-weight: 700;
+            line-height: 1.15;
+            color: #ffffff;
+        }
+
+        .since-clock {
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.72);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.04em;
+        }
+
+        /* Papatya falı kartı */
+        .letter-line.fortune-card,
+        .letter-line.plush-block,
+        .letter-line .since-card {
+            opacity: 1;
+            transform: none;
+        }
+
+        .fortune-card {
+            position: relative;
+            padding: 20px 18px 18px 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.055);
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fortune-kicker {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .fortune-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .daisy-wrap {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            overflow: hidden;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2px 0 4px 0;
+        }
+
+        .daisy-wrap .daisy-svg { width: 100%; height: 100%; overflow: visible; }
+
+        .petal-shape {
+            transform: rotate(var(--a, 0deg));
+            transform-origin: 0 0;
+            transition: transform 0.1s ease;
+        }
+
+        .petal-shape.plucking {
+            animation: pluck 0.62s cubic-bezier(0.34, 1.3, 0.5, 1) forwards;
+        }
+
+        @keyframes pluck {
+            0%   { transform: rotate(var(--rot)) translateY(0) scale(1); opacity: 1; }
+            25%  { transform: rotate(var(--rot)) translateY(-34px) scale(1.05); opacity: 1; }
+            100% { transform: rotate(var(--rot)) translateY(-96px) scale(0.72); opacity: 0; }
+        }
+
+        .fortune-text {
+            font-family: 'Caveat', cursive;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #ffffff;
+            min-height: 34px;
+            text-align: center;
+            transition: opacity 0.2s ease;
+        }
+
+        .fortune-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 11px 22px;
+            font-family: inherit;
+            font-size: 0.86rem;
+            font-weight: 700;
+            background: #ffffff;
+            color: #09090b;
+            cursor: pointer;
+            transition: transform 0.14s ease, opacity 0.2s ease;
+        }
+
+        .fortune-btn:active { transform: scale(0.96); }
+        .fortune-btn[disabled] { opacity: 0.45; }
+
+        .fortune-final {
+            font-family: 'Caveat', cursive;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #ff7d95;
+            text-align: center;
+            line-height: 1.2;
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .fortune-final.show { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* Peluş */
+        .plush-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0 4px 0;
+        }
+
+        .plush {
+            width: 150px;
+            height: 150px;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
+        }
+
+        .plush:hover { transform: translateY(-4px) rotate(-2deg); }
+
+        .plush.hug {
+            animation: bearHug 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes bearHug {
+            0%   { transform: scale(1) rotate(0deg); }
+            30%  { transform: scale(1.13) rotate(-6deg); }
+            55%  { transform: scale(1.06) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .plush-bubble {
+            min-height: 26px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .plush-bubble.show { opacity: 1; transform: translateY(0); }
+
+        /* El yazısı mektup gövdesi */
+        .letter-content .letter-line,
+        .letter-content .letter-quote,
+        .letter-content .letter-sign {
+            font-family: 'Caveat', 'Segoe Script', cursive;
+            font-size: clamp(1.28rem, 5.4vw, 1.5rem);
+            line-height: 1.62;
+            letter-spacing: 0.01em;
+        }
+
+        .letter-content .letter-quote {
+            font-family: 'Caveat', cursive;
+            font-size: clamp(1.3rem, 5.5vw, 1.55rem);
+            font-style: normal;
+        }
+
+        .letter-heading {
+            font-family: 'Caveat', cursive;
+            font-size: clamp(1.85rem, 8vw, 2.3rem);
+            font-weight: 700;
+            line-height: 1.24;
+        }
+
+        /* İmza yazılma animasyonu */
+        .letter-sign span {
+            font-family: 'Caveat', cursive;
+            font-size: clamp(1.9rem, 8vw, 2.4rem);
+            font-weight: 700;
+            display: inline-block;
+            background: linear-gradient(to right, #ffffff 0%, #ffffff 55%, rgba(255, 255, 255, 0.25) 75%, rgba(255, 255, 255, 0.25) 100%);
+            background-size: 260% 100%;
+            background-position: 100% 0;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: background-position 1.8s cubic-bezier(0.5, 0, 0.3, 1);
+        }
+
+        .letter-sign span.writing { background-position: 0 0; }
+
+        .sign-caption {
+            font-family: 'Caveat', cursive;
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.55);
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            margin-top: 6px;
+        }
+
+        .sign-caption.show { opacity: 1; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .petal-rain { display: none; }
+            .wax-seal, .seal-hint { animation: none; }
+        }
+
     </style>
 </head>
 <body>
@@ -1288,7 +1705,16 @@
         </div>
 
         <div id="letterScroll" class="letter-scroll">
+            <div class="petal-rain" id="petalRain" aria-hidden="true"></div>
+
             <article class="letter-content">
+
+                <div class="since-card">
+                    <div class="since-label">15 Ocak 2024'ten beri</div>
+                    <div class="since-main" id="sinceMain">…</div>
+                    <div class="since-clock" id="sinceClock">…</div>
+                </div>
+
                 <h2 class="letter-heading">Geç kalmış bir kutlama ama hiç eksilmemiş bir sevgiyle…</h2>
 
                 <p class="letter-line in-view">
@@ -1303,6 +1729,23 @@
                     "Bazı insanlar hayatına sadece bir tarih olarak değil, bütün mevsimlerin anlamı olarak girer. Sen benim en güzel mevsimimsin, Sudenur."
                 </div>
 
+                <!-- PAPATYA FALI -->
+                <div class="letter-line fortune-card" id="fortuneCard">
+                    <div class="fortune-kicker">Papatya falı</div>
+                    <div class="fortune-title">Senin için bir papatya kopardım.<br>Falını birlikte tutalım mı?</div>
+                    <div class="daisy-wrap">
+                        <svg class="daisy-svg" viewBox="0 0 200 200" aria-hidden="true">
+                    <g id="daisyPetals" transform="translate(100 100)"></g>
+                    <circle cx="100" cy="100" r="20" fill="#f5c33b"></circle>
+                    <circle cx="100" cy="100" r="14" fill="#ffd75e"></circle>
+                    <circle cx="94" cy="94" r="4" fill="#ffeb9e" opacity="0.9"></circle>
+                  </svg>
+                    </div>
+                    <div class="fortune-text" id="fortuneText">Dokun, yaprakları tek tek koparalım…</div>
+                    <div class="fortune-final hand" id="fortuneFinal"></div>
+                    <button class="fortune-btn" id="fortuneBtn" type="button">Falı başlat</button>
+                </div>
+
                 <p class="letter-line">
                     Seninle geçirdiğim her an, en sıradan günümü bile güzelleştiren tek şey. Gözlerinin içine baktığımda dünyanın bütün gürültüsü susuyor; sesini duyduğumda içimdeki her telaş yerini huzura bırakıyor. İyi ki doğmuşsun, iyi ki bu dünyaya gelmişsin ve iyi ki yolun benim yolumla kesişmiş.
                 </p>
@@ -1311,15 +1754,80 @@
                     Yeni yaşında yüzünden o güzel gülümsemen hiç eksik olmasın. Kalbinden geçen ne varsa tek tek gerçek olsun; ama en çok da her anında yanında ben olayım. Geç kalmış bu küçük sürprizim, sana olan sevgimin yanında çok küçük kalır ama bil ki her kelimesi kalbimin en derin yerinden döküldü.
                 </p>
 
+                <!-- PELUŞ -->
+                <div class="letter-line plush-block" id="plushBlock">
+                    <svg class="plush" id="plushBear" viewBox="0 0 200 200" aria-label="Peluş ayıcık">
+                        <defs>
+                            <radialGradient id="bearFur" cx="35%" cy="28%" r="80%">
+                                <stop offset="0%" stop-color="#f0d0a8"/>
+                                <stop offset="55%" stop-color="#d9a878"/>
+                                <stop offset="100%" stop-color="#a87648"/>
+                            </radialGradient>
+                            <radialGradient id="bearSnout" cx="40%" cy="30%" r="80%">
+                                <stop offset="0%" stop-color="#fff3e2"/>
+                                <stop offset="100%" stop-color="#e8cba6"/>
+                            </radialGradient>
+                        </defs>
+                        <!-- kulaklar -->
+                        <circle cx="58" cy="52" r="24" fill="url(#bearFur)"/>
+                        <circle cx="142" cy="52" r="24" fill="url(#bearFur)"/>
+                        <circle cx="58" cy="52" r="13" fill="#e8bf95"/>
+                        <circle cx="142" cy="52" r="13" fill="#e8bf95"/>
+                        <!-- gövde -->
+                        <ellipse cx="100" cy="163" rx="46" ry="30" fill="url(#bearFur)"/>
+                        <!-- kafa -->
+                        <circle cx="100" cy="100" r="52" fill="url(#bearFur)"/>
+                        <!-- burun bölgesi -->
+                        <ellipse cx="100" cy="116" rx="25" ry="19" fill="url(#bearSnout)"/>
+                        <!-- gözler -->
+                        <ellipse class="bear-eye" cx="80" cy="92" rx="6.5" ry="7.5" fill="#2b1a10"/>
+                        <ellipse class="bear-eye" cx="120" cy="92" rx="6.5" ry="7.5" fill="#2b1a10"/>
+                        <circle cx="82.5" cy="89" r="2.4" fill="#ffffff" opacity="0.9"/>
+                        <circle cx="122.5" cy="89" r="2.4" fill="#ffffff" opacity="0.9"/>
+                        <!-- burun -->
+                        <ellipse cx="100" cy="110" rx="7" ry="5.5" fill="#3a2418"/>
+                        <!-- ağız -->
+                        <path d="M100 116 q-7 8 -14 2" stroke="#3a2418" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path d="M100 116 q7 8 14 2" stroke="#3a2418" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- yanaklar -->
+                        <circle cx="66" cy="112" r="9" fill="#ff9aa8" opacity="0.35"/>
+                        <circle cx="134" cy="112" r="9" fill="#ff9aa8" opacity="0.35"/>
+                        <!-- papatya (kulağının yanında) -->
+                        <g transform="translate(152 72)">
+                            <g transform="scale(0.42)">
+                                <g id="bearDaisyPetals"></g>
+                                <circle cx="0" cy="0" r="11" fill="#f5c33b"/>
+                            </g>
+                        </g>
+                        <!-- patiler -->
+                        <ellipse cx="70" cy="150" rx="15" ry="11" fill="#e8bf95"/>
+                        <ellipse cx="130" cy="150" rx="15" ry="11" fill="#e8bf95"/>
+                    </svg>
+                    <div class="plush-bubble hand" id="plushBubble"></div>
+                </div>
+
                 <p class="letter-line">
                     Geçmiş doğum günün kutlu olsun sevgilim… İyi ki varsın, iyi ki benimlesin.
                 </p>
 
                 <div class="letter-line letter-sign">
                     Seni her günden daha çok seven,
-                    <span>Şenolun</span>
+                    <span id="signature">Şenolun</span>
+                    <div class="sign-caption hand" id="signCaption">— ve hep öyle kalacak</div>
                 </div>
             </article>
+        </div>
+
+        <!-- Mührü kırma sahnesi (mektubun üstünde) -->
+        <div class="seal-stage" id="sealStage">
+            <div class="seal-title hand">Sudenur için</div>
+            <button class="wax-seal" id="waxSeal" type="button" aria-label="Mührü kır ve mektubu aç">
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                    <g id="sealDaisy" transform="translate(60 60)"></g>
+                    <circle cx="60" cy="60" r="15" fill="#f5c33b" opacity="0.95"/>
+                </svg>
+            </button>
+            <div class="seal-hint">Mührü kır</div>
         </div>
     </section>
 
@@ -2192,6 +2700,218 @@
             }
         }
 
+
+        // ---------------------------------------------------------------
+        // NOTUM: papatya deneyimi
+        // ---------------------------------------------------------------
+        const sealStage = document.getElementById('sealStage');
+        const waxSeal = document.getElementById('waxSeal');
+        const petalRain = document.getElementById('petalRain');
+        const fortuneBtn = document.getElementById('fortuneBtn');
+        const fortuneText = document.getElementById('fortuneText');
+        const fortuneFinal = document.getElementById('fortuneFinal');
+        const daisyPetalsGroup = document.getElementById('daisyPetals');
+        const plushBear = document.getElementById('plushBear');
+        const plushBubble = document.getElementById('plushBubble');
+        const signature = document.getElementById('signature');
+        const signCaption = document.getElementById('signCaption');
+        const sinceMain = document.getElementById('sinceMain');
+        const sinceClock = document.getElementById('sinceClock');
+
+        const PETAL_PATH = 'M0,-46 C16,-40 22,-16 20,6 C18,30 9,44 0,50 C-9,44 -18,30 -20,6 C-22,-16 -16,-40 0,-46 Z';
+        const PETAL_COUNT = 12;
+
+        // Papatya yapraklarını üret: her yaprak bir elips, kendi açısıyla döner
+        function buildDaisy(group, radius, rx, ry, fill) {
+            if (!group) return [];
+            group.innerHTML = '';
+            const petals = [];
+            for (let i = 0; i < PETAL_COUNT; i++) {
+                const angle = (360 / PETAL_COUNT) * i;
+                const el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                el.setAttribute('cx', '0');
+                el.setAttribute('cy', String(-(radius + ry * 0.72)));
+                el.setAttribute('rx', String(rx));
+                el.setAttribute('ry', String(ry));
+                el.setAttribute('fill', fill);
+                el.setAttribute('class', 'petal-shape');
+                el.style.setProperty('--a', `${angle}deg`);
+                group.appendChild(el);
+                petals.push(el);
+            }
+            return petals;
+        }
+
+        const daisyPetals = buildDaisy(daisyPetalsGroup, 20, 15, 34, '#ffffff');
+        buildDaisy(document.getElementById('sealDaisy'), 26, 13, 26, '#ffffff');
+        buildDaisy(document.getElementById('bearDaisyPetals'), 22, 11, 22, '#ffffff');
+
+        // --- Düşen yapraklar ---
+        function startPetalRain() {
+            if (!petalRain || petalRain.dataset.on === '1') return;
+            petalRain.dataset.on = '1';
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduce) return;
+            const N = 16;
+            for (let i = 0; i < N; i++) {
+                const span = document.createElement('span');
+                span.innerHTML = `<svg viewBox="-26 -50 52 100"><path d="${PETAL_PATH}" fill="rgba(255,255,255,0.9)"/></svg>`;
+                span.style.left = `${Math.random() * 100}%`;
+                span.style.width = `${8 + Math.random() * 9}px`;
+                span.style.height = `${10 + Math.random() * 11}px`;
+                span.style.setProperty('--drift', `${(Math.random() - 0.5) * 140}px`);
+                span.style.setProperty('--spin', `${180 + Math.random() * 420}deg`);
+                const dur = 9 + Math.random() * 9;
+                span.style.animationDuration = `${dur}s`;
+                span.style.animationDelay = `${-Math.random() * dur}s`;
+                petalRain.appendChild(span);
+            }
+        }
+
+        // --- Mühür: kırılınca mektup açılır ---
+        let sealOpened = false;
+
+        function breakSeal() {
+            if (sealOpened) return;
+            sealOpened = true;
+            waxSeal.classList.add('cracked');
+            startPetalRain();
+            if (navigator.vibrate) { try { navigator.vibrate([18, 40, 26]); } catch (_) {} }
+            setTimeout(() => {
+                sealStage.classList.add('gone');
+                revealVisibleLines();
+            }, 620);
+        }
+
+        waxSeal.addEventListener('click', breakSeal);
+        // Sahneye ilk dokunuşta da açılsın
+        sealStage.addEventListener('click', (e) => { if (e.target === sealStage) breakSeal(); });
+
+        // --- Canlı sayaç: 15 Ocak 2024 ---
+        const START_DATE = new Date(2024, 0, 15, 0, 0, 0);
+        const pad2 = (n) => String(n).padStart(2, '0');
+
+        function updateSince() {
+            const now = new Date();
+            let ms = now - START_DATE;
+            if (ms < 0) ms = 0;
+
+            // yıl/ay/gün (takvim hesabı)
+            let years = now.getFullYear() - START_DATE.getFullYear();
+            let months = now.getMonth() - START_DATE.getMonth();
+            let days = now.getDate() - START_DATE.getDate();
+            if (days < 0) {
+                months -= 1;
+                const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+                days += prevMonth;
+            }
+            if (months < 0) { years -= 1; months += 12; }
+
+            const totalDays = Math.floor(ms / 86400000);
+            const hours = now.getHours();
+            const mins = now.getMinutes();
+            const secs = now.getSeconds();
+
+            sinceMain.textContent = `${totalDays.toLocaleString('tr-TR')} gündür seninleyim`;
+            sinceClock.textContent =
+                `${years} yıl ${months} ay ${days} gün · ${pad2(hours)}:${pad2(mins)}:${pad2(secs)}`;
+        }
+
+        updateSince();
+        setInterval(updateSince, 1000);
+
+        // --- Papatya falı ---
+        const FORTUNE_WORDS = ['Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…',
+                               'Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…', 'Seviyor…'];
+        let fortuneRunning = false;
+        let fortuneDone = false;
+
+        function resetFortune() {
+            fortuneFinal.classList.remove('show');
+            fortuneFinal.textContent = '';
+            fortuneText.textContent = 'Dokun, yaprakları tek tek koparalım…';
+            daisyPetals.forEach((p) => {
+                p.classList.remove('plucking');
+                p.style.opacity = '';
+                p.style.transform = '';
+            });
+            fortuneBtn.disabled = false;
+            fortuneBtn.textContent = 'Falı başlat';
+            fortuneDone = false;
+        }
+
+        async function runFortune() {
+            if (fortuneRunning) return;
+            if (fortuneDone) { resetFortune(); return; }
+            fortuneRunning = true;
+            fortuneBtn.disabled = true;
+            fortuneBtn.textContent = 'Koparılıyor…';
+
+            for (let i = 0; i < daisyPetals.length; i++) {
+                const petal = daisyPetals[i];
+                // son yaprak her zaman "Seviyor"da kalır
+                fortuneText.textContent = FORTUNE_WORDS[Math.min(i, FORTUNE_WORDS.length - 1)];
+                petal.classList.add('plucking');
+                if (navigator.vibrate) { try { navigator.vibrate(8); } catch (_) {} }
+                await new Promise((r) => setTimeout(r, 420));
+            }
+
+            await new Promise((r) => setTimeout(r, 260));
+            fortuneText.textContent = '';
+            fortuneFinal.textContent = 'Seviyor. Zaten biliyordum.';
+            fortuneFinal.classList.add('show');
+            fortuneDone = true;
+            fortuneRunning = false;
+            fortuneBtn.disabled = false;
+            fortuneBtn.textContent = 'Baştan tut';
+        }
+
+        fortuneBtn.addEventListener('click', runFortune);
+
+        // --- Peluş ---
+        const PLUSH_LINES = [
+            'Seni sımsıkı sarıyorum.',
+            'Bu ayıcık artık senin, benim gibi.',
+            'Kızdığında bile seni seviyorum.',
+            'Papatyalar sana yakışıyor.',
+            'İyi ki varsın Sudenur.'
+        ];
+        let plushLineIndex = 0;
+
+        plushBear.addEventListener('click', () => {
+            plushBear.classList.remove('hug');
+            void plushBear.offsetWidth;       // animasyonu yeniden tetikle
+            plushBear.classList.add('hug');
+            plushBubble.textContent = PLUSH_LINES[plushLineIndex % PLUSH_LINES.length];
+            plushLineIndex++;
+            plushBubble.classList.add('show');
+            if (navigator.vibrate) { try { navigator.vibrate([12, 30, 12]); } catch (_) {} }
+        });
+
+        // --- İmza animasyonu: mektubun sonuna gelince yazılsın ---
+        let signaturePlayed = false;
+
+        function playSignature() {
+            if (signaturePlayed) return;
+            signaturePlayed = true;
+            signature.classList.add('writing');
+            setTimeout(() => signCaption.classList.add('show'), 1600);
+        }
+
+        // --- Notum açılınca hazırla ---
+        function resetNoteExperience() {
+            sealStage.classList.remove('gone');
+            waxSeal.classList.remove('cracked');
+            sealOpened = false;
+            resetFortune();
+            plushBubble.classList.remove('show');
+            signaturePlayed = false;
+            signature.classList.remove('writing');
+            signCaption.classList.remove('show');
+            updateSince();
+            letterScroll.scrollTop = 0;
+        }
+
         // ---------------------------------------------------------------
         // MEKTUP PANELİ
         // ---------------------------------------------------------------
@@ -2210,7 +2930,8 @@
             noteBackdrop.classList.add('open');
             document.body.classList.add('note-open');
             drawerTrigger.classList.add('active');
-            revealVisibleLines();
+            if (typeof resetNoteExperience === 'function') resetNoteExperience();
+            else revealVisibleLines();
         }
 
         function closeNoteSheet() {
@@ -2270,7 +2991,14 @@
             });
         }
 
-        letterScroll.addEventListener('scroll', revealVisibleLines, { passive: true });
+        letterScroll.addEventListener('scroll', () => {
+            revealVisibleLines();
+            // İmza görünür olduysa yazılma animasyonunu başlat
+            if (signature && !signaturePlayed) {
+                const r = signature.getBoundingClientRect();
+                if (r.top < window.innerHeight - 60) playSignature();
+            }
+        }, { passive: true });
 
         // ---------------------------------------------------------------
         // TELEFONA YÜKLE (PWA)
