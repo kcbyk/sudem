@@ -1131,6 +1131,24 @@
         .player { padding-bottom: calc(72px + var(--safe-b)); }
 
         /* ================= NOTUM: papatya deneyimi ================= */
+        /* Baloo 2: kalın ve çok okunaklı, Türkçe karakter desteği tam */
+        @font-face {
+            font-family: 'Baloo 2';
+            font-style: normal;
+            font-weight: 400 800;
+            font-display: swap;
+            src: url('asset/fonts/baloo2-latin-ext.woff2') format('woff2');
+            unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        }
+        @font-face {
+            font-family: 'Baloo 2';
+            font-style: normal;
+            font-weight: 400 800;
+            font-display: swap;
+            src: url('asset/fonts/baloo2-latin.woff2') format('woff2');
+            unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+
         /* Caveat: latin-ext ve latin altkümeleri AYRI tanımlanmalı,
            yoksa tarayıcı tek dosya kullanıp Türkçe/ASCII harfleri sistem fontuna düşürüyor. */
         @font-face {
@@ -1182,7 +1200,10 @@
             unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
         }
 
-        .hand { font-family: 'Caveat', 'Segoe Script', cursive; }
+        /* Okunaklı, kalın metin */
+        .hand { font-family: 'Baloo 2', 'Trebuchet MS', sans-serif; font-weight: 600; }
+        /* Sadece imza ve küçük vurgular el yazısı kalsın */
+        .script { font-family: 'Caveat', 'Segoe Script', cursive; }
 
         /* Mührü kırma sahnesi */
         .seal-stage {
@@ -1253,8 +1274,9 @@
         }
 
         .seal-title {
-            font-size: 1.9rem;
-            font-weight: 700;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 800;
             color: #ffffff;
             letter-spacing: 0.01em;
             text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
@@ -1321,11 +1343,12 @@
         }
 
         .since-main {
-            font-family: 'Caveat', cursive;
-            font-size: clamp(1.6rem, 7vw, 2.1rem);
-            font-weight: 700;
-            line-height: 1.15;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: clamp(1.35rem, 5.8vw, 1.7rem);
+            font-weight: 800;
+            line-height: 1.25;
             color: #ffffff;
+            letter-spacing: -0.01em;
         }
 
         .since-clock {
@@ -1365,8 +1388,8 @@
         }
 
         .fortune-title {
-            font-family: 'Caveat', cursive;
-            font-size: 1.5rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #ffffff;
             text-align: center;
@@ -1404,8 +1427,8 @@
         }
 
         .fortune-text {
-            font-family: 'Caveat', cursive;
-            font-size: 1.45rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #ffffff;
             min-height: 34px;
@@ -1430,9 +1453,9 @@
         .fortune-btn[disabled] { opacity: 0.45; }
 
         .fortune-final {
-            font-family: 'Caveat', cursive;
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
             color: #ff7d95;
             text-align: center;
             line-height: 1.2;
@@ -1475,8 +1498,8 @@
 
         .plush-bubble {
             min-height: 26px;
-            font-family: 'Caveat', cursive;
-            font-size: 1.3rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 1.05rem;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.9);
             text-align: center;
@@ -1491,28 +1514,37 @@
         .letter-content .letter-line,
         .letter-content .letter-quote,
         .letter-content .letter-sign {
-            font-family: 'Caveat', 'Segoe Script', cursive;
-            font-size: clamp(1.28rem, 5.4vw, 1.5rem);
-            line-height: 1.62;
-            letter-spacing: 0.01em;
+            font-family: 'Baloo 2', 'Trebuchet MS', sans-serif;
+            font-size: clamp(1.06rem, 4.35vw, 1.22rem);
+            font-weight: 600;
+            line-height: 1.76;
+            letter-spacing: 0.002em;
+            color: rgba(255, 255, 255, 0.96);
+        }
+
+        .letter-content .letter-line strong {
+            font-weight: 800;
+            color: #ffffff;
         }
 
         .letter-content .letter-quote {
-            font-family: 'Caveat', cursive;
-            font-size: clamp(1.3rem, 5.5vw, 1.55rem);
-            font-style: normal;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 600;
+            font-size: clamp(1.05rem, 4.4vw, 1.22rem);
+            line-height: 1.72;
         }
 
         .letter-heading {
-            font-family: 'Caveat', cursive;
-            font-size: clamp(1.85rem, 8vw, 2.3rem);
-            font-weight: 700;
-            line-height: 1.24;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: clamp(1.5rem, 6.4vw, 1.95rem);
+            font-weight: 800;
+            line-height: 1.32;
+            letter-spacing: -0.01em;
         }
 
         /* İmza yazılma animasyonu */
         .letter-sign span {
-            font-family: 'Caveat', cursive;
+            font-family: 'Caveat', cursive !important;
             font-size: clamp(1.9rem, 8vw, 2.4rem);
             font-weight: 700;
             display: inline-block;
@@ -1528,8 +1560,9 @@
         .letter-sign span.writing { background-position: 0 0; }
 
         .sign-caption {
-            font-family: 'Caveat', cursive;
-            font-size: 1.05rem;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
             color: rgba(255, 255, 255, 0.55);
             opacity: 0;
             transition: opacity 0.8s ease;
@@ -1742,7 +1775,7 @@
                   </svg>
                     </div>
                     <div class="fortune-text" id="fortuneText">Dokun, yaprakları tek tek koparalım…</div>
-                    <div class="fortune-final hand" id="fortuneFinal"></div>
+                    <div class="fortune-final" id="fortuneFinal"></div>
                     <button class="fortune-btn" id="fortuneBtn" type="button">Falı başlat</button>
                 </div>
 
@@ -1803,7 +1836,7 @@
                         <ellipse cx="70" cy="150" rx="15" ry="11" fill="#e8bf95"/>
                         <ellipse cx="130" cy="150" rx="15" ry="11" fill="#e8bf95"/>
                     </svg>
-                    <div class="plush-bubble hand" id="plushBubble"></div>
+                    <div class="plush-bubble" id="plushBubble"></div>
                 </div>
 
                 <p class="letter-line">
@@ -1813,14 +1846,14 @@
                 <div class="letter-line letter-sign">
                     Seni her günden daha çok seven,
                     <span id="signature">Şenolun</span>
-                    <div class="sign-caption hand" id="signCaption">— ve hep öyle kalacak</div>
+                    <div class="sign-caption" id="signCaption">— ve hep öyle kalacak</div>
                 </div>
             </article>
         </div>
 
         <!-- Mührü kırma sahnesi (mektubun üstünde) -->
         <div class="seal-stage" id="sealStage">
-            <div class="seal-title hand">Sudenur için</div>
+            <div class="seal-title">Sudenur için</div>
             <button class="wax-seal" id="waxSeal" type="button" aria-label="Mührü kır ve mektubu aç">
                 <svg viewBox="0 0 120 120" aria-hidden="true">
                     <g id="sealDaisy" transform="translate(60 60)"></g>
