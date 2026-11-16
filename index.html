@@ -1863,6 +1863,10 @@
         const libCount = document.getElementById('libCount');
 
         function setView(view) {
+            // Sekme değişince açık olan mektup paneli kapanır:
+            // aksi hâlde panel arkada yeni ekran açılmış gibi görünüyordu.
+            if (noteSheet.classList.contains('open')) closeNoteSheet();
+
             const isLibrary = view === 'library';
             document.body.classList.toggle('view-library', isLibrary);
             document.body.classList.toggle('view-home', !isLibrary);
@@ -1993,6 +1997,7 @@
             noteSheet.classList.add('open');
             noteBackdrop.classList.add('open');
             document.body.classList.add('note-open');
+            drawerTrigger.classList.add('active');
             revealVisibleLines();
         }
 
@@ -2001,9 +2006,13 @@
             noteSheet.classList.remove('open');
             noteBackdrop.classList.remove('open');
             document.body.classList.remove('note-open');
+            drawerTrigger.classList.remove('active');
         }
 
-        drawerTrigger.addEventListener('click', openNoteSheet);
+        drawerTrigger.addEventListener('click', () => {
+            if (noteSheet.classList.contains('open')) closeNoteSheet();
+            else openNoteSheet();
+        });
         closeSheetBtn.addEventListener('click', closeNoteSheet);
         noteBackdrop.addEventListener('click', closeNoteSheet);
 
