@@ -1436,6 +1436,15 @@
             transition: opacity 0.2s ease;
         }
 
+        .fortune-count {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.45);
+            font-variant-numeric: tabular-nums;
+        }
+
         .fortune-btn {
             border: none;
             border-radius: 999px;
@@ -1774,9 +1783,10 @@
                     <circle cx="94" cy="94" r="4" fill="#ffeb9e" opacity="0.9"></circle>
                   </svg>
                     </div>
-                    <div class="fortune-text" id="fortuneText">Dokun, yaprakları tek tek koparalım…</div>
+                    <div class="fortune-text" id="fortuneText">Hazırsan başlayalım…</div>
+                    <div class="fortune-count" id="fortuneCount">12 yaprak</div>
                     <div class="fortune-final" id="fortuneFinal"></div>
-                    <button class="fortune-btn" id="fortuneBtn" type="button">Falı başlat</button>
+                    <button class="fortune-btn" id="fortuneBtn" type="button">İlk yaprağı kopar</button>
                 </div>
 
                 <p class="letter-line">
@@ -2853,54 +2863,95 @@
         updateSince();
         setInterval(updateSince, 1000);
 
-        // --- Papatya falı ---
-        const FORTUNE_WORDS = ['Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…',
-                               'Seviyor…', 'Sevmiyor…', 'Seviyor…', 'Sevmiyor…', 'Seviyor…'];
-        let fortuneRunning = false;
-        let fortuneDone = false;
+        // --- Papatya falı: her basışta bir yaprak, her yaprakta ayrı cümle ---
+        const fortuneCount = document.getElementById('fortuneCount');
+
+        // 12 yaprak = 12 ayrı cümle. Son yaprak her zaman "Seviyor" ile biter.
+        const FORTUNE_LINES = [
+            { s: 'Seviyor…',            t: 'ilk yaprak bile bunu söylüyor' },
+            { s: 'Sevmiyor…',           t: 'buna sen de inanmadın, değil mi?' },
+            { s: 'Seviyor…',            t: 'hem de sandığından çok' },
+            { s: 'Sevmiyor…',           t: 'yaprak yalan söylüyor' },
+            { s: 'Seviyor…',            t: 'gözlerinden zaten belli' },
+            { s: 'Sevmiyor…',           t: 'kendini kandırıyor' },
+            { s: 'Seviyor…',            t: 'ilk günkü gibi, hiç değişmeden' },
+            { s: 'Sevmiyor…',           t: 'kalbi başka bir şey söylüyor' },
+            { s: 'Seviyor…',            t: 'her şeye rağmen' },
+            { s: 'Sevmiyor…',           t: 'sabaha unutmuş olur' },
+            { s: 'Seviyor…',            t: 'hem de deli gibi' },
+            { s: 'Seviyor…',            t: 'son yaprak da seviyor' }
+        ];
+
+        const FORTUNE_FINALS = [
+            'Seviyor. Zaten biliyordum.',
+            'Seviyor. Papatya da şaşırmadı.',
+            'Seviyor. Bundan hiç şüphem olmadı.',
+            'Seviyor. Fal bahane, ben zaten emindim.'
+        ];
+
+        let petalIndex = 0;
+        let fortuneBusy = false;
 
         function resetFortune() {
+            petalIndex = 0;
+            fortuneBusy = false;
             fortuneFinal.classList.remove('show');
             fortuneFinal.textContent = '';
-            fortuneText.textContent = 'Dokun, yaprakları tek tek koparalım…';
+            fortuneText.textContent = 'Hazırsan başlayalım…';
+            fortuneCount.textContent = `${PETAL_COUNT} yaprak`;
             daisyPetals.forEach((p) => {
                 p.classList.remove('plucking');
                 p.style.opacity = '';
                 p.style.transform = '';
             });
             fortuneBtn.disabled = false;
-            fortuneBtn.textContent = 'Falı başlat';
-            fortuneDone = false;
+            fortuneBtn.textContent = 'İlk yaprağı kopar';
         }
 
-        async function runFortune() {
-            if (fortuneRunning) return;
-            if (fortuneDone) { resetFortune(); return; }
-            fortuneRunning = true;
-            fortuneBtn.disabled = true;
-            fortuneBtn.textContent = 'Koparılıyor…';
+        function pluckOne() {
+            if (fortuneBusy) return;
 
-            for (let i = 0; i < daisyPetals.length; i++) {
-                const petal = daisyPetals[i];
-                // son yaprak her zaman "Seviyor"da kalır
-                fortuneText.textContent = FORTUNE_WORDS[Math.min(i, FORTUNE_WORDS.length - 1)];
-                petal.classList.add('plucking');
-                if (navigator.vibrate) { try { navigator.vibrate(8); } catch (_) {} }
-                await new Promise((r) => setTimeout(r, 420));
+            // Fal bittiyse buton baştan başlatır
+            if (petalIndex >= PETAL_COUNT) {
+                resetFortune();
+                return;
             }
 
-            await new Promise((r) => setTimeout(r, 260));
-            fortuneText.textContent = '';
-            fortuneFinal.textContent = 'Seviyor. Zaten biliyordum.';
-            fortuneFinal.classList.add('show');
-            fortuneDone = true;
-            fortuneRunning = false;
-            fortuneBtn.disabled = false;
-            fortuneBtn.textContent = 'Baştan tut';
+            fortuneBusy = true;
+            fortuneBtn.disabled = true;
+
+            const line = FORTUNE_LINES[petalIndex];
+            const petal = daisyPetals[petalIndex];
+
+            petal.classList.add('plucking');
+            if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
+
+            fortuneText.textContent = `${line.s} ${line.t}`;
+            petalIndex += 1;
+
+            const left = PETAL_COUNT - petalIndex;
+            fortuneCount.textContent = left > 0 ? `${left} yaprak kaldı` : 'yaprak kalmadı';
+
+            setTimeout(() => {
+                fortuneBusy = false;
+                if (petalIndex >= PETAL_COUNT) {
+                    // Son yaprak: büyük kapanış
+                    fortuneText.textContent = '';
+                    fortuneFinal.textContent = FORTUNE_FINALS[Math.floor(Math.random() * FORTUNE_FINALS.length)];
+                    fortuneFinal.classList.add('show');
+                    fortuneBtn.disabled = false;
+                    fortuneBtn.textContent = 'Baştan tut';
+                    if (navigator.vibrate) { try { navigator.vibrate([14, 50, 14, 50, 20]); } catch (_) {} }
+                } else {
+                    fortuneBtn.disabled = false;
+                    fortuneBtn.textContent = 'Bir yaprak daha kopar';
+                }
+            }, 640);
         }
 
-        fortuneBtn.addEventListener('click', runFortune);
-
+        fortuneBtn.addEventListener('click', pluckOne);
+        // Papatyaya dokunmak da yaprak koparır
+        document.querySelector('.daisy-wrap')?.addEventListener('click', pluckOne);
         // --- Peluş ---
         const PLUSH_LINES = [
             'Seni sımsıkı sarıyorum.',
