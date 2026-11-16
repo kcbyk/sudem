@@ -99,10 +99,10 @@
             pointer-events: none;
             background: linear-gradient(
                 to top,
-                rgba(0, 0, 0, 0.78) 0%,
-                rgba(0, 0, 0, 0.58) 22%,
-                rgba(0, 0, 0, 0.12) 48%,
-                rgba(0, 0, 0, 0) 68%
+                rgba(0, 0, 0, 0.62) 0%,
+                rgba(0, 0, 0, 0.42) 24%,
+                rgba(0, 0, 0, 0.08) 48%,
+                rgba(0, 0, 0, 0) 66%
             );
         }
 
@@ -113,7 +113,7 @@
             right: 0;
             bottom: 0;
             z-index: 10;
-            padding: 18px 22px calc(14px + var(--safe-b)) 22px;
+            padding: 18px 22px calc(72px + var(--safe-b)) 22px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -445,7 +445,7 @@
         /* ---- Mektup Paneli (Bottom Sheet) ---- */
         .note-backdrop {
             position: fixed;
-            inset: 0;
+            inset: 0 0 calc(var(--bar-h) + var(--safe-b)) 0;
             z-index: 30;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
@@ -460,8 +460,8 @@
             position: fixed;
             left: 0;
             right: 0;
-            bottom: 0;
-            height: 88vh;
+            bottom: calc(var(--bar-h) + var(--safe-b));
+            height: 86vh;
             max-height: 820px;
             z-index: 40;
             background: linear-gradient(180deg, #0c0c0f 0%, #050506 100%);
@@ -685,6 +685,301 @@
         @media (min-width: 900px) {
             .player { padding: 22px 48px 22px 48px; }
         }
+
+        /* ============ ARAYÜZ: ÜST BAR / ALT BAR / KÜTÜPHANE ============ */
+        :root { --bar-h: 62px; }
+
+        /* Sağ üstte geri butonu (ana sayfa dışındayken görünür) */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 45;
+            padding: calc(8px + var(--safe-t)) 14px 8px 14px;
+            display: flex;
+            justify-content: flex-end;
+            pointer-events: none;
+        }
+
+        .back-btn {
+            pointer-events: auto;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(22, 22, 26, 0.66);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            cursor: pointer;
+            font-family: inherit;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        body:not(.view-home) .back-btn,
+        body.note-open .back-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .back-btn:active { transform: scale(0.92); }
+        .back-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+        /* Alt bar */
+        .tabbar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 8px 6px calc(6px + var(--safe-b)) 6px;
+            background: rgba(10, 10, 12, 0.86);
+            border-top: 1px solid rgba(255, 255, 255, 0.09);
+            backdrop-filter: blur(20px) saturate(1.1);
+            -webkit-backdrop-filter: blur(20px) saturate(1.1);
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 0 2px 0;
+            color: #8a8a93;
+            font-family: inherit;
+            font-size: 0.66rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            transition: color 0.18s ease;
+        }
+
+        .tab svg { width: 22px; height: 22px; fill: currentColor; }
+        .tab.active { color: #ffffff; }
+        .tab:active { color: #d4d4d8; }
+
+        /* Notu açan tutamaç artık alt barda bir sekme */
+        .tabbar .drawer-trigger {
+            margin: 0;
+            padding: 6px 0 2px 0;
+            gap: 4px;
+            color: #8a8a93;
+        }
+        .tabbar .drawer-trigger .trigger-pill { display: none; }
+        .tabbar .drawer-trigger .trigger-label {
+            font-size: 0.66rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: none;
+            opacity: 1;
+        }
+        .tabbar .drawer-trigger.active,
+        body.note-open .tabbar .drawer-trigger { color: #ffffff; }
+        body.note-open .tabbar .tab:not(.drawer-trigger) { color: #8a8a93; }
+
+        /* Kütüphane ekranı */
+        .library {
+            position: fixed;
+            inset: 0 0 calc(var(--bar-h) + var(--safe-b)) 0;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            padding-top: calc(14px + var(--safe-t));
+            background: rgba(8, 8, 10, 0.66);
+            backdrop-filter: blur(22px) saturate(1.05);
+            -webkit-backdrop-filter: blur(22px) saturate(1.05);
+            transform: translateY(102%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.26s ease;
+        }
+
+        body.view-library .library {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Kütüphanede oynatıcı gizlenir, listeye yer açılır */
+        body.view-library .player { display: none; }
+        body.view-library .install-bar { display: none; }
+
+        .lib-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 4px 20px 14px 20px;
+            padding-right: 74px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .lib-head h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+        }
+
+        .lib-count {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #8a8a93;
+            white-space: nowrap;
+        }
+
+        .lib-list {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 12px 14px calc(20px + var(--safe-b)) 14px;
+        }
+
+        .lib-list::-webkit-scrollbar { width: 4px; }
+        .lib-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+        }
+
+        .lib-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+            padding: 9px;
+            margin-bottom: 8px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            color: #ffffff;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .lib-row:active { background: rgba(255, 255, 255, 0.1); }
+
+        .lib-row.playing {
+            border-color: rgba(255, 0, 51, 0.5);
+            background: rgba(255, 0, 51, 0.09);
+        }
+
+        .lib-cover {
+            width: 48px;
+            height: 48px;
+            border-radius: 9px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: #18181b;
+        }
+
+        .lib-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .lib-title {
+            font-size: 0.93rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lib-artist {
+            font-size: 0.78rem;
+            color: #9a9aa2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lib-index {
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #6f6f78;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .lib-play {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lib-play svg { width: 14px; height: 14px; fill: #ffffff; }
+        .lib-row.playing .lib-play { background: var(--accent); }
+
+        /* Kütüphanede mini oynatıcı: şarkı kontrolü kaybolmasın */
+        .mini-player {
+            position: fixed;
+            left: 8px;
+            right: 8px;
+            bottom: calc(var(--bar-h) + var(--safe-b));
+            z-index: 41;
+            display: none;
+            align-items: center;
+            gap: 11px;
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: rgba(20, 20, 24, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+        }
+
+        body.view-library .mini-player { display: flex; }
+        /* Mektup açıkken mini oynatıcı gizlenir: yazının üstüne binmesin */
+        body.note-open .mini-player { display: none; }
+
+        .mini-player .lib-cover { width: 40px; height: 40px; border-radius: 8px; }
+
+        .mini-play-btn {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #09090b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .mini-play-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .mini-play-btn:active { transform: scale(0.94); }
+
+        body.view-library .library { inset: 0 0 calc(var(--bar-h) + 62px + var(--safe-b)) 0; }
+
+        /* Oynatıcı alt bardan yukarıda dursun */
+        .player { padding-bottom: calc(72px + var(--safe-b)); }
     </style>
 </head>
 <body>
@@ -763,11 +1058,52 @@
             </div>
         </div>
 
-        <button id="drawerTrigger" class="drawer-trigger" type="button" aria-label="Notu açmak için yukarı kaydır veya tıkla">
-            <span class="trigger-pill"></span>
-            <span class="trigger-label">Sana Bir Notum Var • Yukarı Kaydır</span>
-        </button>
     </main>
+
+    <!-- Sağ üstte geri butonu -->
+    <div class="topbar">
+        <button id="backBtn" class="back-btn" type="button" aria-label="Geri">
+            <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+    </div>
+
+    <!-- Kütüphane ekranı -->
+    <section id="libraryView" class="library" aria-label="Kütüphane">
+        <header class="lib-head">
+            <h2>Kütüphane</h2>
+            <span id="libCount" class="lib-count"></span>
+        </header>
+        <div id="libraryList" class="lib-list"></div>
+    </section>
+
+    <!-- Kütüphane görünümünde mini oynatıcı -->
+    <div class="mini-player" id="miniPlayer">
+        <img id="miniCover" class="lib-cover" alt="" src="asset/rafet.jpg">
+        <span class="lib-meta">
+            <span class="lib-title" id="miniTitle">Kısa Mesafe</span>
+            <span class="lib-artist" id="miniArtist">Rafat Hasanlı</span>
+        </span>
+        <button id="miniPlay" class="mini-play-btn" type="button" aria-label="Oynat / Duraklat">
+            <svg id="miniIconPause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            <svg id="miniIconPlay" viewBox="0 0 24 24" style="display:none"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+    </div>
+
+    <!-- Alt bar -->
+    <nav class="tabbar" aria-label="Alt menü">
+        <button id="tabHome" class="tab active" type="button" aria-label="Ana Sayfa">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Ana Sayfa</span>
+        </button>
+        <button id="tabLibrary" class="tab" type="button" aria-label="Kütüphane">
+            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 9H9V9h8v2zm0-4H9V5h8v2z"/></svg>
+            <span>Kütüphane</span>
+        </button>
+        <button id="drawerTrigger" class="tab drawer-trigger" type="button" aria-label="Notu aç">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+            <span class="trigger-label">Notum</span>
+        </button>
+    </nav>
 
     <!-- Telefona yükle / ana ekrana ekle bildirimi -->
     <div id="installBar" class="install-bar" role="dialog" aria-live="polite">
@@ -1213,6 +1549,7 @@
             iconPlay.style.display = paused ? 'block' : 'none';
             iconPause.style.display = paused ? 'none' : 'block';
             document.body.classList.toggle('is-paused', paused);
+            if (typeof syncMiniPlayer === 'function') syncMiniPlayer();
             if (!paused) {
                 autoplayBlocked = false;
                 if (!statusNote.classList.contains('error')) setStatus('');
@@ -1451,6 +1788,133 @@
             } catch (_) {}
         }
 
+
+        // ---------------------------------------------------------------
+        // EKRANLAR: ANA SAYFA / KÜTÜPHANE + GERİ BUTONU
+        // ---------------------------------------------------------------
+        const tabHome = document.getElementById('tabHome');
+        const tabLibrary = document.getElementById('tabLibrary');
+        const backBtn = document.getElementById('backBtn');
+        const libraryList = document.getElementById('libraryList');
+        const libCount = document.getElementById('libCount');
+
+        function setView(view) {
+            const isLibrary = view === 'library';
+            document.body.classList.toggle('view-library', isLibrary);
+            document.body.classList.toggle('view-home', !isLibrary);
+            tabHome.classList.toggle('active', !isLibrary);
+            tabLibrary.classList.toggle('active', isLibrary);
+            if (isLibrary) {
+                installBar.classList.remove('visible');
+                renderLibrary();
+            }
+        }
+
+        function goBack() {
+            // Önce açık olan katmanı kapat, yoksa ana sayfaya dön
+            if (noteSheet.classList.contains('open')) {
+                closeNoteSheet();
+            } else if (document.body.classList.contains('view-library')) {
+                setView('home');
+            } else {
+                setView('home');
+            }
+        }
+
+        // Kütüphane listesi: satıra dokununca o şarkı çalar
+        function renderLibrary() {
+            libraryList.innerHTML = '';
+            libCount.textContent = `${PLAYLIST.length} şarkı`;
+
+            PLAYLIST.forEach((track, index) => {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'lib-row' + (index === currentTrackIndex ? ' playing' : '');
+                row.setAttribute('aria-label', `${track.title} — ${track.artist}`);
+
+                const num = document.createElement('span');
+                num.className = 'lib-index';
+                num.textContent = String(index + 1).padStart(2, '0');
+                if (index === currentTrackIndex) num.textContent = '▶';
+
+                const img = document.createElement('img');
+                img.className = 'lib-cover';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.src = track.coverSrc;
+                img.alt = '';
+
+                const meta = document.createElement('span');
+                meta.className = 'lib-meta';
+                const t = document.createElement('span');
+                t.className = 'lib-title';
+                t.textContent = track.title;
+                const a = document.createElement('span');
+                a.className = 'lib-artist';
+                a.textContent = track.artist;
+                meta.appendChild(t);
+                meta.appendChild(a);
+
+                const play = document.createElement('span');
+                play.className = 'lib-play';
+                play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+
+                row.appendChild(num);
+                row.appendChild(img);
+                row.appendChild(meta);
+                row.appendChild(play);
+
+                row.addEventListener('click', () => {
+                    loadTrack(index, true);
+                    setView('home');
+                });
+
+                libraryList.appendChild(row);
+            });
+        }
+
+        const miniCover = document.getElementById('miniCover');
+        const miniTitle = document.getElementById('miniTitle');
+        const miniArtist = document.getElementById('miniArtist');
+        const miniPlay = document.getElementById('miniPlay');
+        const miniIconPlay = document.getElementById('miniIconPlay');
+        const miniIconPause = document.getElementById('miniIconPause');
+
+        miniPlay.addEventListener('click', togglePlayback);
+
+        function syncMiniPlayer() {
+            const track = currentTrack();
+            miniCover.src = track.coverSrc || FALLBACK_COVER;
+            miniTitle.textContent = track.title;
+            miniArtist.textContent = track.artist;
+            const paused = audio.paused;
+            miniIconPlay.style.display = paused ? 'block' : 'none';
+            miniIconPause.style.display = paused ? 'none' : 'block';
+        }
+
+        tabHome.addEventListener('click', () => setView('home'));
+        tabLibrary.addEventListener('click', () => setView('library'));
+        backBtn.addEventListener('click', goBack);
+
+        // Liste, şarkı değişince güncel kalsın
+        const originalRenderTrackInfo = renderTrackInfo;
+        renderTrackInfo = function (track) {
+            originalRenderTrackInfo(track);
+            syncMiniPlayer();
+            if (document.body.classList.contains('view-library')) renderLibrary();
+            else updateLibraryHighlight();
+        };
+
+        function updateLibraryHighlight() {
+            const rows = libraryList.children;
+            for (let i = 0; i < rows.length; i++) {
+                const isCurrent = i === currentTrackIndex;
+                rows[i].classList.toggle('playing', isCurrent);
+                const num = rows[i].querySelector('.lib-index');
+                if (num) num.textContent = isCurrent ? '▶' : String(i + 1).padStart(2, '0');
+            }
+        }
+
         // ---------------------------------------------------------------
         // MEKTUP PANELİ
         // ---------------------------------------------------------------
@@ -1459,6 +1923,7 @@
             noteSheet.style.transform = '';
             noteSheet.classList.add('open');
             noteBackdrop.classList.add('open');
+            document.body.classList.add('note-open');
             revealVisibleLines();
         }
 
@@ -1466,6 +1931,7 @@
             noteSheet.style.transform = '';
             noteSheet.classList.remove('open');
             noteBackdrop.classList.remove('open');
+            document.body.classList.remove('note-open');
         }
 
         drawerTrigger.addEventListener('click', openNoteSheet);
@@ -1583,6 +2049,8 @@
         // ---------------------------------------------------------------
         // BAŞLANGIÇ
         // ---------------------------------------------------------------
+        document.body.classList.add('view-home');
+        renderLibrary();
         syncVolumeUI();
         renderTrackInfo(currentTrack());
         updateMediaSession(currentTrack());
