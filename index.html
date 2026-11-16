@@ -963,20 +963,34 @@
         /* Kütüphanede mini oynatıcı: şarkı kontrolü kaybolmasın */
         .mini-player {
             position: fixed;
-            left: 8px;
-            right: 8px;
-            bottom: calc(var(--bar-h) + var(--safe-b));
+            left: 12px;
+            right: 12px;
+            /* Alt barın üstünde, kenarlardan eşit boşlukla oturur */
+            bottom: calc(var(--bar-h) + 10px + var(--safe-b));
             z-index: 41;
             display: none;
             align-items: center;
             gap: 11px;
-            padding: 8px 10px;
-            border-radius: 14px;
-            background: rgba(20, 20, 24, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            padding: 8px 12px 8px 8px;
+            border-radius: 16px;
+            background: rgba(18, 18, 22, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(18px) saturate(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(1.1);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            overflow: hidden;
+        }
+
+        /* Mini oynatıcının üstünde ince ilerleme çizgisi */
+        .mini-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 2px;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 0 2px 2px 0;
+            transition: width 0.25s linear;
         }
 
         body.view-library .mini-player { display: flex; }
@@ -1002,7 +1016,7 @@
         .mini-play-btn svg { width: 18px; height: 18px; fill: currentColor; }
         .mini-play-btn:active { transform: scale(0.94); }
 
-        body.view-library .library { inset: 0 0 calc(var(--bar-h) + 62px + var(--safe-b)) 0; }
+        body.view-library .library { inset: 0 0 calc(var(--bar-h) + 80px + var(--safe-b)) 0; }
 
         /* Oynatıcı alt bardan yukarıda dursun */
         .player { padding-bottom: calc(72px + var(--safe-b)); }
@@ -1104,6 +1118,7 @@
 
     <!-- Kütüphane görünümünde mini oynatıcı -->
     <div class="mini-player" id="miniPlayer">
+        <span class="mini-progress" id="miniProgress"></span>
         <img id="miniCover" class="lib-cover" alt="" src="asset/rafet.jpg">
         <span class="lib-meta">
             <span class="lib-title" id="miniTitle">Kısa Mesafe</span>
@@ -1610,6 +1625,7 @@
             currentTimeEl.textContent = formatTime(audio.currentTime);
             updateBufferUI();
             maybePrefetchNext();
+            if (document.body.classList.contains('view-library') && typeof syncMiniPlayer === 'function') syncMiniPlayer();
         }
 
         function updateBufferUI() {
@@ -1908,6 +1924,8 @@
 
         miniPlay.addEventListener('click', togglePlayback);
 
+        const miniProgress = document.getElementById('miniProgress');
+
         function syncMiniPlayer() {
             const track = currentTrack();
             miniCover.src = track.coverSrc || FALLBACK_COVER;
@@ -1916,6 +1934,9 @@
             const paused = audio.paused;
             miniIconPlay.style.display = paused ? 'block' : 'none';
             miniIconPause.style.display = paused ? 'none' : 'block';
+            const d = audio.duration;
+            const pct = Number.isFinite(d) && d > 0 ? (audio.currentTime / d) * 100 : 0;
+            miniProgress.style.width = `${Math.min(100, Math.max(0, pct))}%`;
         }
 
         tabHome.addEventListener('click', () => setView('home'));
