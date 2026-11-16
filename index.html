@@ -1459,43 +1459,77 @@
             (typeof conn.downlink === 'number' && conn.downlink > 0 && conn.downlink < 2) || // < 2 Mbps
             conn.downlink === 0;
 
-        function loadBackgroundVideo() {
+        // Video telefona gömülür: bir kez indirilip blob olarak oynatılır.
+        // Böylece internet gitse de video durmaz, ekran boşalmaz.
+        let bgBlobUrl = null;
+
+        async function getCachedVideoUrl(url, cacheName) {
+            if (!('caches' in window)) return null;
+            try {
+                const cache = await caches.open(cacheName);
+                const hit = await cache.match(new URL(url, location.href).href, { ignoreSearch: true });
+                if (!hit) return null;
+                const blob = await hit.blob();
+                if (!blob || blob.size < 1000) return null;
+                return URL.createObjectURL(blob);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function loadBackgroundVideo() {
             if (!bgVideo || bgVideo.dataset.loaded === '1') return;
             bgVideo.dataset.loaded = '1';
-            bgVideo.dataset.quality = v('asset/videom-hd.mp4');
-            bgVideo.src = v('asset/videom-hd.mp4');
-            bgVideo.load();
+
+            const hd = v('asset/videom-hd.mp4');
+            const sd = v('asset/videom-sd.mp4');
+            const wanted = isSlowNetwork ? sd : hd;
+            bgVideo.dataset.quality = wanted;
+
+            // 1) Önbellekte varsa blob olarak kullan: internet gerekmez
+            let blob = await getCachedVideoUrl(wanted, 'sudem-media-v1');
+            // 2) Diğer kalite önbellekteyse onu kullan
+            if (!blob) blob = await getCachedVideoUrl(isSlowNetwork ? hd : sd, 'sudem-media-v1');
+
+            if (blob) {
+                bgBlobUrl = blob;
+                bgVideo.src = blob;             // tamamen yerel, akış yok
+                bgVideo.loop = true;
+                bgVideo.load();
+            } else {
+                bgVideo.src = wanted;           // ilk açılış: ağdan gelsin
+            }
             ensureVideoPlaying();
         }
 
-        if (isSlowNetwork) {
-            // Video kapanmıyor: yavaş bağlantıda 3 kat hafif sürüm (0.6 Mbps) oynatılır,
-            // böylece hem akıcı kalır hem şarkıya yer kalır.
-            bgVideo.dataset.loaded = '1';
-            bgVideo.dataset.quality = v('asset/videom-sd.mp4');
-            bgVideo.src = v('asset/videom-sd.mp4');
-            bgVideo.load();
-            bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
-        } else {
-            bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
-            // Önce şarkı başlasın, video arkasından gelsin (video şarkıyı geciktirmesin)
-            const startVideoSoon = () => setTimeout(loadBackgroundVideo, 1500);
-            if (document.readyState === 'complete') startVideoSoon();
-            else window.addEventListener('load', startVideoSoon, { once: true });
-        }
-
-        // Bağlantı sonradan yavaşlarsa videoyu bırak, şarkıya yer aç
-        if (conn.addEventListener) {
-            conn.addEventListener('change', () => {
-                if (!bgVideo || bgVideo.dataset.loaded !== '1') return;
-                const nowSlow = conn.saveData === true || /(^|-)2g$/.test(conn.effectiveType || '') || /(^|-)3g$/.test(conn.effectiveType || '');
-                const want = nowSlow ? v('asset/videom-sd.mp4') : v('asset/videom-hd.mp4');
-                if (bgVideo.dataset.quality === want) return;
-                bgVideo.dataset.quality = want;
-                bgVideo.src = want;
+        // Video açılamazsa ekran boş kalmasın: diğer kaliteyi, o da yoksa kapak görselini koy
+        let videoRetry = 0;
+        bgVideo.addEventListener('error', async () => {
+            if (!bgVideo.dataset.loaded) return;
+            if (videoRetry === 0) {
+                videoRetry++;
+                const other = isSlowNetwork ? v('asset/videom-hd.mp4') : v('asset/videom-sd.mp4');
+                const blob = await getCachedVideoUrl(other, 'sudem-media-v1');
+                bgVideo.src = blob || other;
                 bgVideo.load();
                 ensureVideoPlaying();
-            });
+            } else {
+                bgVideo.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
+                bgVideo.style.backgroundSize = 'cover';
+                bgVideo.style.backgroundPosition = 'center 35%';
+            }
+        });
+
+        bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
+        const startVideoSoon = () => setTimeout(loadBackgroundVideo, isSlowNetwork ? 300 : 1200);
+        if (document.readyState === 'complete') startVideoSoon();
+        else window.addEventListener('load', startVideoSoon, { once: true });
+
+        // Bağlantı sonradan yavaşlarsa videoyu bırak, şarkıya yer aç
+        // Bağlantı değişse bile video kaynağı değiştirilmez: internet gitse de
+        // çalan blob video durmadan devam eder.
+        if (conn.addEventListener) {
+            conn.addEventListener('change', () => ensureVideoPlaying());
         }
 
         document.addEventListener('visibilitychange', () => {

@@ -5,7 +5,7 @@
  * Not: önbellek adları SABİT tutulur; uygulama güncellenince indirilen
  * şarkılar silinmez, yeniden indirmek gerekmez.
  */
-const APP_VERSION = 'v4';
+const APP_VERSION = 'v5';
 const AUDIO_CACHE = 'sudem-audio-v1';
 const MEDIA_CACHE = 'sudem-media-v1';
 const META_CACHE = 'sudem-meta-' + APP_VERSION;
@@ -36,6 +36,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const meta = await caches.open(META_CACHE);
     await Promise.allSettled(CORE.map((url) => meta.add(new Request(url, { cache: 'reload' }))));
+    // Arka plan videosu da önbelleğe girsin (offline'da oynasın)
+    const media = await caches.open(MEDIA_CACHE);
+    await Promise.allSettled([
+      media.add(new Request('./asset/videom-sd.mp4', { cache: 'reload' })),
+      media.add(new Request('./asset/videom-poster.webp', { cache: 'reload' }))
+    ]);
     self.skipWaiting();
   })());
 });
@@ -76,6 +82,14 @@ async function cacheStatus() {
 
 // Hepsini sırayla indir (paralel indirme bağlantıyı boğmasın)
 async function downloadAll(reply) {
+  // 1) Arka plan videosu (yavaş bağlantıda hafif sürüm) — internet gitse de oynasın
+  const c = navigator.connection || {};
+  const slow = c.saveData === true || /(^|-)2g$|(^|-)3g$/.test(c.effectiveType || '') ||
+               (typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 2);
+  const video = slow ? './asset/videom-sd.mp4' : './asset/videom-hd.mp4';
+  await grab(MEDIA_CACHE, video);
+  await grab(MEDIA_CACHE, './asset/videom-poster.webp');
+
   let done = 0;
   for (const t of TRACKS) {
     const okAudio = await grab(AUDIO_CACHE, t.audio);
