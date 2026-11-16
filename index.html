@@ -994,22 +994,49 @@
             return PLAYLIST[currentTrackIndex];
         }
 
-        function prefetchNext() {
-            // Yavaş bağlantıda önden indirme, çalan şarkıyla bant genişliğini
-            // yarıştırıp takılmaya yol açar. Sadece hızlı bağlantıda yap.
-            if (isSlowNetwork) return;
-            const nextIndex = (currentTrackIndex + 1) % PLAYLIST.length;
-            const next = PLAYLIST[nextIndex];
-            if (!next || !next.audioSrc) return;
-            // Aynı dosyayı önden çekip HTTP cache'e alır; geçiş anında bekleme olmaz.
+        let prefetchedIndex = -1;
+
+        function bufferedEnd() {
+            if (!audio.buffered || audio.buffered.length === 0) return 0;
+            for (let i = 0; i < audio.buffered.length; i++) {
+                if (audio.buffered.start(i) <= audio.currentTime && audio.currentTime <= audio.buffered.end(i)) {
+                    return audio.buffered.end(i);
+                }
+            }
+            return audio.buffered.end(audio.buffered.length - 1);
+        }
+
+        function startPrefetch(index) {
+            const next = PLAYLIST[index];
+            if (!next || !next.audioSrc || prefetchedIndex === index) return;
+            prefetchedIndex = index;
             if (warmAudio) {
                 warmAudio.src = '';
                 warmAudio = null;
             }
+            // Aynı dosyayı önden çekip HTTP cache'e alır; geçiş anında bekleme olmaz.
             warmAudio = new Audio();
             warmAudio.preload = 'auto';
             warmAudio.src = next.audioSrc;
             warmAudio.load();
+        }
+
+        function prefetchNext() {
+            startPrefetch((currentTrackIndex + 1) % PLAYLIST.length);
+        }
+
+        /**
+         * Akıllı önden indirme: çalan şarkı TAMAMEN indiyse bağlantı boştadır,
+         * sıradaki şarkıyı o zaman indir. Böylece yavaş bağlantıda bile
+         * "sonraki" tuşuna basınca bekleme olmuyor, takılma da olmuyor.
+         */
+        function maybePrefetchNext() {
+            const d = audio.duration;
+            if (!Number.isFinite(d) || d <= 0) return;
+            if (bufferedEnd() < d - 3) return;
+            // Yavaş bağlantıda şarkının ilk yarısını bekle: bant genişliği önce çalana kalsın
+            if (isSlowNetwork && audio.currentTime < d * 0.5) return;
+            prefetchNext();
         }
 
         function renderTrackInfo(track) {
@@ -1064,7 +1091,8 @@
                 syncPlaybackUI();
             }
 
-            prefetchNext();
+            prefetchedIndex = -1;
+            if (!isSlowNetwork) prefetchNext();
             tellServiceWorker(currentTrackIndex);
         }
 
@@ -1163,6 +1191,7 @@
             }
             currentTimeEl.textContent = formatTime(audio.currentTime);
             updateBufferUI();
+            maybePrefetchNext();
         }
 
         function updateBufferUI() {
@@ -1265,7 +1294,10 @@
         // ---------------------------------------------------------------
         audio.addEventListener('loadedmetadata', updateTimelineUI);
 
-        audio.addEventListener('progress', updateBufferUI);
+        audio.addEventListener('progress', () => {
+            updateBufferUI();
+            maybePrefetchNext();
+        });
 
         // Meta bilgi gelir gelmez süreyi göster (dosya tamamen inmeyi beklemesin)
         audio.addEventListener('durationchange', updateTimelineUI);
