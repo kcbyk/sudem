@@ -56,16 +56,40 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
-// Kalan şarkıları tek tek, bağlantıyı boğmadan önden indir
-function warmLibrary() {
+// Mobil veride tüm kütüphaneyi indirmek çalan şarkıyı boğar:
+// sadece Wi-Fi'de ve sıradaki birkaç şarkıyı, sırayla (paralel değil) indir.
+function isCheapNetwork() {
+  const c = navigator.connection || {};
+  if (c.saveData) return false;
+  const t = c.type || c.effectiveType || '';
+  return t === 'wifi' || t === 'ethernet' || t === '4g' || t === '';
+}
+
+async function warm(urls, cacheName, limit) {
+  const cache = await caches.open(cacheName);
+  for (const url of urls.slice(0, limit)) {
+    try {
+      if (await cache.match(new Request(url), { ignoreSearch: true })) continue;
+      await cache.add(new Request(url, { cache: 'no-cache' }));
+    } catch (_) { /* tek dosya inmezse devam */ }
+  }
+}
+
+function warmLibrary(startIndex = 0) {
+  if (!isCheapNetwork()) return Promise.resolve();
+  const ordered = AUDIO_FILES.slice(startIndex).concat(AUDIO_FILES.slice(0, startIndex));
   return Promise.allSettled([
-    caches.open(AUDIO_CACHE).then((c) => Promise.allSettled(AUDIO_FILES.map((u) => c.add(new Request(u, { cache: 'no-cache' }))))),
-    caches.open(MEDIA_CACHE).then((c) => Promise.allSettled(COVERS.map((u) => c.add(new Request(u, { cache: 'no-cache' })))))
+    warm(ordered, AUDIO_CACHE, 3),
+    warm(COVERS, MEDIA_CACHE, COVERS.length)
   ]);
 }
 
 self.addEventListener('message', (event) => {
-  if (event.data === 'warm') event.waitUntil(warmLibrary());
+  const data = event.data;
+  if (data === 'warm') { event.waitUntil(warmLibrary(0)); return; }
+  if (data && typeof data === 'object' && data.type === 'warm' && typeof data.index === 'number') {
+    event.waitUntil(warmLibrary(data.index));
+  }
 });
 
 self.addEventListener('fetch', (event) => {
@@ -120,7 +144,7 @@ self.addEventListener('fetch', (event) => {
   })());
 });
 
-// Uygulama açıldıktan sonra kalan şarkıları sessizce indirmeye başla
+// Uygulama açıldıktan sonra (Wi-Fi'deyse) sıradaki birkaç şarkıyı sessizce indir
 self.addEventListener('activate', () => {
-  setTimeout(() => { warmLibrary(); }, 3000);
+  setTimeout(() => { warmLibrary(0); }, 6000);
 });

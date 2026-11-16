@@ -672,10 +672,9 @@
 </head>
 <body>
 
-    <video id="bgVideo" class="bg-video" poster="asset/videom-poster.webp" autoplay muted loop playsinline preload="auto">
-        <source src="asset/videom-hd.mp4" type="video/mp4">
-        <source src="asset/videom.mp4" type="video/mp4">
-    </video>
+    <!-- Kaynak JS'ten veriliyor: yavaş bağlantıda video hiç indirilmez,
+         bant genişliği şarkıya kalır (takılma olmaz). -->
+    <video id="bgVideo" class="bg-video" poster="asset/videom-poster.webp" muted loop playsinline preload="none"></video>
     <div class="vignette"></div>
 
     <audio id="audio" preload="auto" playsinline></audio>
@@ -933,7 +932,52 @@
             }
         }
 
-        bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
+        // Arka plan videosu, yalnızca bağlantı "pahalı" değilse yüklenir.
+        // Mobil veri / tasarruf modu / 2G-3G: video yerine keskin kapak görseli kalır,
+        // böylece şarkı takılmadan akar.
+        const conn = navigator.connection || {};
+        const networkType = conn.type || conn.effectiveType || '';
+        const isSlowNetwork = conn.saveData === true ||
+            /(^|-)2g$/.test(networkType) ||
+            /(^|-)3g$/.test(networkType) ||
+            (typeof conn.downlink === 'number' && conn.downlink > 0 && conn.downlink < 2) || // < 2 Mbps
+            conn.downlink === 0;
+
+        function loadBackgroundVideo() {
+            if (!bgVideo || bgVideo.dataset.loaded === '1') return;
+            bgVideo.dataset.loaded = '1';
+            bgVideo.src = v('asset/videom-hd.mp4');
+            bgVideo.load();
+            ensureVideoPlaying();
+        }
+
+        if (isSlowNetwork) {
+            bgVideo.removeAttribute('poster');
+            document.body.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center 35%';
+        } else {
+            bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
+            // Önce şarkı başlasın, video arkasından gelsin (video şarkıyı geciktirmesin)
+            const startVideoSoon = () => setTimeout(loadBackgroundVideo, 1500);
+            if (document.readyState === 'complete') startVideoSoon();
+            else window.addEventListener('load', startVideoSoon, { once: true });
+        }
+
+        // Bağlantı sonradan yavaşlarsa videoyu bırak, şarkıya yer aç
+        if (conn.addEventListener) {
+            conn.addEventListener('change', () => {
+                if (bgVideo && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) {
+                    bgVideo.pause();
+                    bgVideo.removeAttribute('src');
+                    bgVideo.load();
+                    bgVideo.dataset.loaded = '';
+                    document.body.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center 35%';
+                }
+            });
+        }
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
@@ -951,6 +995,9 @@
         }
 
         function prefetchNext() {
+            // Yavaş bağlantıda önden indirme, çalan şarkıyla bant genişliğini
+            // yarıştırıp takılmaya yol açar. Sadece hızlı bağlantıda yap.
+            if (isSlowNetwork) return;
             const nextIndex = (currentTrackIndex + 1) % PLAYLIST.length;
             const next = PLAYLIST[nextIndex];
             if (!next || !next.audioSrc) return;
@@ -1018,6 +1065,7 @@
             }
 
             prefetchNext();
+            tellServiceWorker(currentTrackIndex);
         }
 
         function tryStartPlayback() {
@@ -1425,6 +1473,17 @@
             setTimeout(() => {
                 showInstallBar('<b>Tam ekran için:</b> Safari’de <b>Paylaş</b> → <b>Ana Ekrana Ekle</b>.', false);
             }, 4500);
+        }
+
+        // Service worker'a "şu an bu şarkıdayız" bilgisini ver:
+        // sadece sıradaki 3 şarkı, sadece Wi-Fi'de önden indirilir.
+        function tellServiceWorker(index) {
+            if (!('serviceWorker' in navigator)) return;
+            const send = (reg) => {
+                const target = reg.active || reg.waiting || reg.installing;
+                if (target) target.postMessage({ type: 'warm', index });
+            };
+            navigator.serviceWorker.ready.then(send).catch(() => {});
         }
 
         // Service worker: ikinci açılışta şarkılar anında hazır
