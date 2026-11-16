@@ -65,8 +65,10 @@
             object-fit: cover;
             object-position: center 35%;
             z-index: 1;
+            /* Video yokken (yavaş bağlantı) bu görsel görünür */
             background-color: #09090b;
-            background-position: center;
+            background-image: url('asset/videom-poster.webp');
+            background-position: center 35%;
             background-size: cover;
             filter: saturate(1.12) contrast(1.07);
             transform: scale(1.06);
@@ -952,10 +954,9 @@
         }
 
         if (isSlowNetwork) {
-            bgVideo.removeAttribute('poster');
-            document.body.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center 35%';
+            // Video hiç indirilmez; kare kapak görseli arka planda kalır (siyah ekran olmaz).
+            bgVideo.poster = 'asset/videom-poster.webp?v=3';
+            bgVideo.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
         } else {
             bgVideo.addEventListener('canplay', ensureVideoPlaying, { once: true });
             // Önce şarkı başlasın, video arkasından gelsin (video şarkıyı geciktirmesin)
@@ -972,9 +973,8 @@
                     bgVideo.removeAttribute('src');
                     bgVideo.load();
                     bgVideo.dataset.loaded = '';
-                    document.body.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center 35%';
+                    bgVideo.poster = 'asset/videom-poster.webp?v=3';
+                    bgVideo.style.backgroundImage = "url('asset/videom-poster.webp?v=3')";
                 }
             });
         }
