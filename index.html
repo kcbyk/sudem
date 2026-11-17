@@ -70,25 +70,12 @@
             background-image: url('asset/videom-poster.webp');
             background-position: center 35%;
             background-size: cover;
-            filter: saturate(1.12) contrast(1.07);
-            transform: scale(1.06);
-            animation: bgDrift 40s ease-in-out infinite alternate;
-            transition: filter 0.4s ease;
-        }
-
-        /* Sabit duran görüntü "donuk" görünüyordu; çok yavaş bir hareket
-           hem daha canlı hem de ekranda daha keskin algılanıyor. */
-        @keyframes bgDrift {
-            from { transform: scale(1.06) translate3d(0, 0, 0); }
-            to   { transform: scale(1.12) translate3d(-1.5%, -1.2%, 0); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .bg-video { animation: none; transform: scale(1.04); }
+            /* Performans: tam ekran videoda CSS filter ve sürekli animasyon
+               mobil GPU'yu kilitliyordu. Video kendi başına oynuyor, ekstra katman yok. */
         }
 
         body.is-paused .bg-video {
-            filter: saturate(1.05) contrast(1.07);
+            opacity: 0.96;
         }
 
         /* Yazıların okunabilirliği için degrade — video görünsün diye hafif tutuldu */
@@ -154,9 +141,9 @@
             border-radius: 50%;
             z-index: -1;
             pointer-events: none;
-            opacity: 0.55;
-            filter: blur(56px);
-            background: radial-gradient(circle, var(--cover-glow, rgba(255, 0, 51, 0.5)) 0%, transparent 70%);
+            opacity: 0.5;
+            /* blur yok: gradyanın kendisi yumuşak geçişli */
+            background: radial-gradient(circle at 50% 60%, var(--cover-glow, rgba(255, 0, 51, 0.5)) 0%, rgba(0, 0, 0, 0) 68%);
             transition: background 0.6s ease;
         }
 
@@ -447,9 +434,8 @@
             position: fixed;
             inset: 0 0 calc(var(--bar-h) + var(--safe-b)) 0;
             z-index: 55;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            /* Performans: tam ekran backdrop-filter yerine düz karartma */
+            background: rgba(0, 0, 0, 0.82);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.32s ease;
@@ -557,6 +543,17 @@
         /* Flex kolonunda öğeler sıkışıp çökmesin */
         .letter-content > * { flex-shrink: 0; }
 
+        /* Performans: ekran dışındaki mektup blokları render edilmesin */
+        .letter-content > .letter-line,
+        .letter-content > .letter-heading,
+        .letter-content > .letter-sign,
+        .letter-content > .fortune-card,
+        .letter-content > .plush-block,
+        .letter-content > .since-card {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 140px;
+        }
+
         .letter-heading {
             font-size: clamp(1.3rem, 5.5vw, 1.7rem);
             font-weight: 700;
@@ -622,11 +619,9 @@
             gap: 12px;
             padding: 12px 14px;
             border-radius: 16px;
-            background: rgba(16, 16, 20, 0.94);
+            background: rgba(16, 16, 20, 0.96);
             border: 1px solid rgba(255, 255, 255, 0.16);
             box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
         }
 
         .install-bar.visible { display: flex; }
@@ -714,11 +709,9 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: rgba(22, 22, 26, 0.66);
+            background: rgba(22, 22, 26, 0.88);
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
             cursor: pointer;
             font-family: inherit;
             opacity: 0;
@@ -760,10 +753,10 @@
             height: 148px;
             z-index: -1;
             pointer-events: none;
-            background:
-                radial-gradient(120% 100% at 50% 100%, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.62) 45%, rgba(0, 0, 0, 0) 78%),
-                linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.28) 55%, rgba(0, 0, 0, 0) 100%);
-            filter: blur(14px);
+            background: linear-gradient(to top,
+                rgba(0, 0, 0, 0.92) 0%,
+                rgba(0, 0, 0, 0.55) 45%,
+                rgba(0, 0, 0, 0) 100%);
         }
 
         /* İkon ve yazılar gölge sayesinde her videoda okunur */
@@ -771,9 +764,7 @@
             text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.85);
         }
 
-        .tab svg {
-            filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.9));
-        }
+
 
         .tab {
             background: none;
@@ -794,7 +785,7 @@
 
         .tab svg { width: 22px; height: 22px; fill: currentColor; }
         .tab.active { color: #ffffff; }
-        .tab.active svg { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35)) drop-shadow(0 1px 5px rgba(0, 0, 0, 0.9)); }
+
         .tab:active { color: #d4d4d8; }
 
         /* Notu açan tutamaç artık alt barda bir sekme */
@@ -824,9 +815,8 @@
             display: flex;
             flex-direction: column;
             padding-top: calc(14px + var(--safe-t));
-            background: rgba(8, 8, 10, 0.72);
-            backdrop-filter: blur(22px) saturate(1.05);
-            -webkit-backdrop-filter: blur(22px) saturate(1.05);
+            /* Performans: blur yerine yarı saydam düz zemin (video arkada görünür) */
+            background: rgba(10, 10, 13, 0.82);
             transform: translateY(102%);
             opacity: 0;
             pointer-events: none;
@@ -1083,10 +1073,8 @@
             gap: 11px;
             padding: 8px 12px 8px 8px;
             border-radius: 16px;
-            background: rgba(18, 18, 22, 0.9);
+            background: rgba(18, 18, 22, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(18px) saturate(1.1);
-            -webkit-backdrop-filter: blur(18px) saturate(1.1);
             box-shadow: 0 12px 34px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.07);
             overflow: hidden;
         }
@@ -1489,7 +1477,6 @@
             height: 150px;
             cursor: pointer;
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
         }
 
         .plush:hover { transform: translateY(-4px) rotate(-2deg); }
@@ -2034,7 +2021,9 @@
 
             const hd = v('asset/videom-hd.mp4');
             const sd = v('asset/videom-sd.mp4');
-            const wanted = isSlowNetwork ? sd : hd;
+            // Telefon genişliğinde SD yeterli: 1080p decode etmek pahalı
+            const smallScreen = Math.min(window.innerWidth, window.innerHeight) <= 520;
+            const wanted = (isSlowNetwork || smallScreen) ? sd : hd;
             bgVideo.dataset.quality = wanted;
 
             // 1) Önbellekte varsa blob olarak kullan: internet gerekmez
@@ -2086,8 +2075,10 @@
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 bgVideo.pause();
+                stopSince();
             } else {
                 ensureVideoPlaying();
+                if (document.body.classList.contains('note-open')) startSince();
             }
         });
 
@@ -2144,9 +2135,17 @@
         }
 
         // Kapağın baskın rengini bulup arkaya yumuşak ışık olarak ver
+        const glowCache = new Map();
+
         function applyCoverGlow() {
             const glowEl = document.querySelector('.cover-glow');
             if (!glowEl || !coverImg.naturalWidth) return;
+            // Aynı kapak için tekrar tekrar canvas işlemi yapma
+            const key = coverImg.currentSrc || coverImg.src;
+            if (glowCache.has(key)) {
+                glowEl.style.setProperty('--cover-glow', glowCache.get(key));
+                return;
+            }
             try {
                 const size = 24;
                 const canvas = document.createElement('canvas');
@@ -2163,7 +2162,9 @@
                 if (!n) return;
                 r = r / n; g = g / n; b = b / n;
                 const boost = (c) => Math.min(255, Math.round(c * 1.35 + 20));
-                glowEl.style.setProperty('--cover-glow', `rgba(${boost(r)}, ${boost(g)}, ${boost(b)}, 0.6)`);
+                const value = `rgba(${boost(r)}, ${boost(g)}, ${boost(b)}, 0.6)`;
+                glowCache.set(key, value);
+                glowEl.style.setProperty('--cover-glow', value);
             } catch (_) { /* canvas engellenirse sessizce geç */ }
         }
 
@@ -2191,7 +2192,7 @@
                     title: track.title,
                     artist: track.artist,
                     album: 'Sudenur için',
-                    artwork: track.coverSrc ? [{ src: track.coverSrc, sizes: '512x512', type: 'image/jpeg' }] : []
+                    artwork: track.coverSrc ? [{ src: track.coverSrc, sizes: '256x256' }] : []
                 });
             } catch (e) { /* desteklenmiyorsa sorun değil */ }
         }
@@ -2616,6 +2617,16 @@
         const libCount = document.getElementById('libCount');
 
         function setView(view) {
+            // Performans: kütüphane açıkken video arka planda bulanık görünüyordu,
+            // ama görünmediği için decode etmek boşuna. Duraklat.
+            if (bgVideo) {
+                if (view === 'library') {
+                    bgVideo.pause();
+                } else {
+                    // Gerçekten görünür olduktan sonra devam ettir
+                    requestAnimationFrame(() => ensureVideoPlaying());
+                }
+            }
             // Sekme değişince açık olan mektup paneli kapanır:
             // aksi hâlde panel arkada yeni ekran açılmış gibi görünüyordu.
             if (noteSheet.classList.contains('open')) closeNoteSheet();
@@ -2729,8 +2740,7 @@
         renderTrackInfo = function (track) {
             originalRenderTrackInfo(track);
             syncMiniPlayer();
-            if (document.body.classList.contains('view-library')) renderLibrary();
-            else updateLibraryHighlight();
+            updateLibraryHighlight();
         };
 
         function updateLibraryHighlight() {
@@ -2790,12 +2800,24 @@
         buildDaisy(document.getElementById('bearDaisyPetals'), 22, 11, 22, '#ffffff');
 
         // --- Düşen yapraklar ---
+        let petalRainOn = false;
+
+        function stopPetalRain() {
+            if (!petalRain) return;
+            petalRain.innerHTML = '';
+            petalRain.dataset.on = '0';
+            petalRainOn = false;
+        }
+
         function startPetalRain() {
             if (!petalRain || petalRain.dataset.on === '1') return;
             petalRain.dataset.on = '1';
+            petalRainOn = true;
+            // Performans: azaltılmış hareket tercihi veya düşük güçlü cihazda çalıştırma
             const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (reduce) return;
-            const N = 16;
+            const lowPower = (navigator.hardwareConcurrency || 8) <= 4;
+            const N = lowPower ? 8 : 12;
             for (let i = 0; i < N; i++) {
                 const span = document.createElement('span');
                 span.innerHTML = `<svg viewBox="-26 -50 52 100"><path d="${PETAL_PATH}" fill="rgba(255,255,255,0.9)"/></svg>`;
@@ -2861,7 +2883,16 @@
         }
 
         updateSince();
-        setInterval(updateSince, 1000);
+        // Performans: sayaç sadece Notum açıkken çalışsın
+        let sinceTimer = null;
+        function startSince() {
+            stopSince();
+            updateSince();
+            sinceTimer = setInterval(updateSince, 1000);
+        }
+        function stopSince() {
+            if (sinceTimer) { clearInterval(sinceTimer); sinceTimer = null; }
+        }
 
         // --- Papatya falı: her basışta bir yaprak, her yaprakta ayrı cümle ---
         const fortuneCount = document.getElementById('fortuneCount');
@@ -2901,8 +2932,10 @@
             fortuneCount.textContent = `${PETAL_COUNT} yaprak`;
             daisyPetals.forEach((p) => {
                 p.classList.remove('plucking');
+                p.style.display = '';
                 p.style.opacity = '';
                 p.style.transform = '';
+                p.style.willChange = '';
             });
             fortuneBtn.disabled = false;
             fortuneBtn.textContent = 'İlk yaprağı kopar';
@@ -2924,6 +2957,8 @@
             const petal = daisyPetals[petalIndex];
 
             petal.classList.add('plucking');
+            petal.style.willChange = 'transform, opacity';
+            setTimeout(() => { petal.style.display = 'none'; petal.style.willChange = ''; }, 700);
             if (navigator.vibrate) { try { navigator.vibrate(10); } catch (_) {} }
 
             fortuneText.textContent = `${line.s} ${line.t}`;
@@ -3016,6 +3051,7 @@
             drawerTrigger.classList.add('active');
             if (typeof resetNoteExperience === 'function') resetNoteExperience();
             else revealVisibleLines();
+            if (typeof startSince === 'function') startSince();
         }
 
         function closeNoteSheet() {
@@ -3024,6 +3060,8 @@
             noteBackdrop.classList.remove('open');
             document.body.classList.remove('note-open');
             drawerTrigger.classList.remove('active');
+            if (typeof stopSince === 'function') stopSince();
+            if (typeof stopPetalRain === 'function') stopPetalRain();
         }
 
         drawerTrigger.addEventListener('click', () => {
